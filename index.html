@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="zh-TW" class="h-full">
- <head>
+<head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>房間預約管理系統</title>
@@ -457,8 +457,8 @@
       display: none;
     }
   </style>
- </head>
- <body class="h-full" style="background: linear-gradient(135deg, #FDF2F8 0%, #FCE7F3 100%);">
+</head>
+<body class="h-full" style="background: linear-gradient(135deg, #FDF2F8 0%, #FCE7F3 100%);">
   <!-- 登入遮罩 -->
   <div id="login-overlay" class="login-overlay">
     <div class="login-container">
@@ -837,52 +837,66 @@
       { id: '2', name: '房間2', subtitle: '(直身琴伴奏)', area: '約50呎', capacity: '2-3人', equipment: '譜架', rates: { weekday: 80, weekend: 120 }, hasVideo: false }
     ];
 
-    // 動態生成公眾假期（未來3年）
-    const publicHolidays = generatePublicHolidays();
+    // 完整的公眾假期數據
+    const publicHolidays = {
+      // 2027年假期
+      '2027-01-01': '一月一日',
+      '2027-02-06': '農曆新年初一',
+      '2027-02-07': '農曆新年初二',
+      '2027-02-08': '農曆新年初三',
+      '2027-02-09': '農曆新年初四',
+      '2027-03-26': '耶穌受難節',
+      '2027-03-27': '耶穌受難節翌日',
+      '2027-03-29': '復活節星期一',
+      '2027-04-05': '清明節',
+      '2027-05-01': '勞動節',
+      '2027-05-13': '佛誕',
+      '2027-06-09': '端午節',
+      '2027-07-01': '香港特別行政區成立紀念日',
+      '2027-09-16': '中秋節翌日',
+      '2027-10-01': '國慶日',
+      '2027-10-08': '重陽節',
+      '2027-12-25': '聖誕節',
+      '2027-12-27': '聖誕節後第一個周日',
+      
+      // 2028年假期
+      '2028-01-01': '一月一日',
+      '2028-01-26': '農曆新年初一',
+      '2028-01-27': '農曆新年初二',
+      '2028-01-28': '農曆新年初三',
+      '2028-04-04': '清明節',
+      '2028-04-14': '耶穌受難節',
+      '2028-04-15': '耶穌受難節翌日',
+      '2028-04-17': '復活節星期一',
+      '2028-05-01': '勞動節',
+      '2028-05-02': '佛誕',
+      '2028-05-29': '端午節',
+      '2028-07-01': '香港特別行政區成立紀念日',
+      '2028-10-01': '國慶日',
+      '2028-10-04': '中秋節翌日',
+      '2028-10-26': '重陽節',
+      '2028-12-25': '聖誕節',
+      '2028-12-26': '聖誕節後第一個周日'
+    };
 
-    function generatePublicHolidays() {
-      const holidays = {};
+    // 添加未來年份的假期（簡單預測）
+    function addFutureHolidays() {
       const currentYear = new Date().getFullYear();
       
-      // 為當前年份和未來2年生成假期
-      for (let year = currentYear; year <= currentYear + 2; year++) {
-        // 固定日期假期
-        holidays[`${year}-01-01`] = '元旦';
-        holidays[`${year}-05-01`] = '勞動節';
-        holidays[`${year}-07-01`] = '香港特區成立紀念日';
-        holidays[`${year}-10-01`] = '國慶日';
-        holidays[`${year}-12-25`] = '聖誕節';
-        holidays[`${year}-12-26`] = '聖誕節後第一個周日';
-        
-        // 農曆假期（簡單估算，實際需要準確計算）
-        // 這裡使用近似日期，實際使用時應使用準確的農曆計算
-        const lunarNewYearDates = getLunarNewYearDates(year);
-        holidays[`${year}-${lunarNewYearDates.day1}`] = '農曆年初一';
-        holidays[`${year}-${lunarNewYearDates.day2}`] = '農曆年初二';
-        holidays[`${year}-${lunarNewYearDates.day3}`] = '農曆年初三';
-        
-        // 其他節日（使用近似日期）
-        holidays[`${year}-04-04`] = '清明節';
-        holidays[`${year}-06-20`] = '端午節';
-        holidays[`${year}-09-27`] = '中秋節翌日';
-        holidays[`${year}-10-20`] = '重陽節翌日';
-      }
-      
-      return holidays;
+      // 添加2029年假期（簡單估算）
+      publicHolidays['2029-01-01'] = '一月一日';
+      publicHolidays['2029-02-13'] = '農曆新年初一';
+      publicHolidays['2029-02-14'] = '農曆新年初二';
+      publicHolidays['2029-02-15'] = '農曆新年初三';
+      publicHolidays['2029-04-05'] = '清明節';
+      publicHolidays['2029-05-01'] = '勞動節';
+      publicHolidays['2029-07-01'] = '香港特別行政區成立紀念日';
+      publicHolidays['2029-10-01'] = '國慶日';
+      publicHolidays['2029-12-25'] = '聖誕節';
+      publicHolidays['2029-12-26'] = '聖誕節後第一個周日';
     }
-
-    function getLunarNewYearDates(year) {
-      // 簡化的農曆新年日期（實際應使用準確計算）
-      const lunarDates = {
-        2024: { day1: '02-10', day2: '02-11', day3: '02-12' },
-        2025: { day1: '01-29', day2: '01-30', day3: '01-31' },
-        2026: { day1: '02-17', day2: '02-18', day3: '02-19' },
-        2027: { day1: '02-06', day2: '02-07', day3: '02-08' },
-        2028: { day1: '01-26', day2: '01-27', day3: '01-28' }
-      };
-      
-      return lunarDates[year] || { day1: '02-01', day2: '02-02', day3: '02-03' };
-    }
+    
+    addFutureHolidays();
 
     const STAFF_PASSWORD = "kaya2026"; // 工作人員密碼
 
@@ -900,13 +914,62 @@
     let isStaffMode = false;
     let isPublicMode = false;
 
+    // 新的收費計算函數（考慮週末下午2點前後）
+    function calculateRateForRoom(roomId, date, startTime) {
+      const isHoliday = isPublicHoliday(date);
+      const isWeekendDay = isWeekend(date);
+      
+      // 公眾假期一律按假日費率（全日）
+      if (isHoliday) {
+        if (['B', 'C', 'D', 'E'].includes(roomId)) return 90;
+        if (roomId === '2') return 120;
+      }
+      
+      // 週末考慮下午2點前後
+      if (isWeekendDay) {
+        const [startHour, startMinute] = startTime.split(':').map(Number);
+        const isAfter2PM = startHour >= 14; // 14:00及之後算下午2點後
+        
+        // B, C, D, E 房
+        if (['B', 'C', 'D', 'E'].includes(roomId)) {
+          return isAfter2PM ? 90 : 60;
+        }
+        
+        // 2房
+        if (roomId === '2') {
+          return isAfter2PM ? 120 : 80;
+        }
+      }
+      
+      // 平日或非B/C/D/E/2房
+      const room = rooms.find(r => r.id === roomId);
+      if (!room) return 0;
+      
+      return room.rates.weekday;
+    }
+
+    // 計算錄影服務額外費用
+    function calculateVideoExtra(roomId, date, startTime) {
+      if (roomId === 'A') {
+        const isHoliday = isPublicHoliday(date);
+        const isWeekendDay = isWeekend(date);
+        const room = rooms.find(r => r.id === roomId);
+        
+        if (isHoliday || isWeekendDay) {
+          return room.videoRates.weekend - room.rates.weekend;
+        } else {
+          return room.videoRates.weekday - room.rates.weekday;
+        }
+      }
+      return 0;
+    }
+
     // 載入預約數據
     function loadBookings() {
       try {
         const saved = localStorage.getItem(STORAGE_KEY);
         if (saved) {
           const parsed = JSON.parse(saved);
-          // 確保每個預約都有必要的字段
           bookings = parsed.map(booking => ({
             id: booking.id || Date.now().toString() + Math.random().toString(36).substr(2, 9),
             room_id: booking.room_id || '',
@@ -968,9 +1031,9 @@
           
           // 檢查時間是否重疊
           const isOverlap = (
-            (newStartMinutes >= existingStartMinutes && newStartMinutes < existingEndMinutes) || // 新開始時間在現有時段內
-            (newEndMinutes > existingStartMinutes && newEndMinutes <= existingEndMinutes) || // 新結束時間在現有時段內
-            (newStartMinutes <= existingStartMinutes && newEndMinutes >= existingEndMinutes) // 新時段完全包含現有時段
+            (newStartMinutes >= existingStartMinutes && newStartMinutes < existingEndMinutes) ||
+            (newEndMinutes > existingStartMinutes && newEndMinutes <= existingEndMinutes) ||
+            (newStartMinutes <= existingStartMinutes && newEndMinutes >= existingEndMinutes)
           );
           
           if (isOverlap) {
@@ -999,12 +1062,10 @@
         return { valid: false, message: '預約時長最少1小時' };
       }
       
-      // 檢查是否符合半小時增量規則（1小時後每半小時增加）
+      // 檢查是否符合半小時增量規則
       const hours = durationMinutes / 60;
-      
-      // 允許的時長：1小時, 1.5小時, 2小時, 2.5小時, 3小時, 3.5小時... 以此類推
       const remainder = hours % 0.5;
-      if (remainder > 0.01 && remainder < 0.49) { // 容許浮點數誤差
+      if (remainder > 0.01 && remainder < 0.49) {
         return { valid: false, message: '時長必須是整小時或半小時（如：1小時、1.5小時、2小時、2.5小時）' };
       }
       
@@ -1079,11 +1140,9 @@
       generateTimeOptions();
       setupLoginMode();
       
-      // 更新當前年份顯示
       const currentYear = new Date().getFullYear();
       document.getElementById('current-year-display').textContent = currentYear;
       
-      // 自動顯示當月
       currentCalendarMonth = new Date();
       renderCalendar();
     }
@@ -1106,7 +1165,6 @@
         }
       });
 
-      // 按Enter鍵登入
       document.getElementById('staff-password').addEventListener('keypress', (e) => {
         if (e.key === 'Enter') {
           document.getElementById('staff-login-btn').click();
@@ -1121,10 +1179,8 @@
       document.getElementById('sidebar').style.display = 'none';
       document.getElementById('statistics-section').style.display = 'none';
       
-      // 調整版面
       document.querySelector('main').style.width = '100%';
       
-      // 公開模式隱藏舊客戶選項
       document.getElementById('returning-customer-container').style.display = 'none';
       document.getElementById('staff-payment-section').style.display = 'none';
       document.getElementById('payment-instructions').style.display = 'block';
@@ -1139,11 +1195,9 @@
       document.getElementById('sidebar').style.display = 'flex';
       document.getElementById('statistics-section').style.display = 'flex';
       
-      // 恢復版面
       document.querySelector('main > section').style.width = '70%';
       document.querySelector('main > aside').style.width = '30%';
       
-      // 工作人員模式顯示所有選項
       document.getElementById('returning-customer-container').style.display = 'block';
       document.getElementById('staff-payment-section').style.display = 'block';
       document.getElementById('payment-instructions').style.display = 'none';
@@ -1197,7 +1251,6 @@
           let endH = Math.floor(totalMinutes / 60);
           let endM = totalMinutes % 60;
           
-          // 如果超過22:00，調整到22:00
           if (endH > 22 || (endH === 22 && endM > 0)) {
             endH = 22;
             endM = 0;
@@ -1274,7 +1327,17 @@
       document.getElementById('room-info-area').textContent = room.area;
       document.getElementById('room-info-capacity').textContent = room.capacity;
       document.getElementById('room-info-equipment').textContent = room.equipment;
-      document.getElementById('room-info-rates').textContent = `平日$${room.rates.weekday} / 假日$${room.rates.weekend}`;
+      
+      // 根據房間類型顯示不同的收費信息
+      if (['B', 'C', 'D', 'E'].includes(roomId)) {
+        document.getElementById('room-info-rates').textContent = '平日(全日), 六及日(2pm前) $60 / 六及日(2pm後)及假日(全日) $90';
+      } else if (roomId === '2') {
+        document.getElementById('room-info-rates').textContent = '平日(全日), 六及日(2pm前) $80 / 六及日(2pm後)及假日(全日) $120';
+      } else if (roomId === 'A') {
+        document.getElementById('room-info-rates').textContent = `平日$${room.rates.weekday} / 假日$${room.rates.weekend}`;
+      } else if (roomId === '1') {
+        document.getElementById('room-info-rates').textContent = `平日$${room.rates.weekday} / 假日$${room.rates.weekend}`;
+      }
 
       if (room.hasVideo) {
         document.getElementById('room-info-video').style.display = 'block';
@@ -1291,9 +1354,7 @@
       startSelect.innerHTML = '<option value="">請選擇</option>';
       endSelect.innerHTML = '<option value="">請選擇</option>';
 
-      // 只生成整點和半點選項
       for (let h = 8; h <= 22; h++) {
-        // 整點
         if (h < 22) {
           const time = `${String(h).padStart(2, '0')}:00`;
           const displayTime = formatTime(time);
@@ -1309,7 +1370,6 @@
           endSelect.appendChild(option2);
         }
         
-        // 半點（除了22:30，因為最晚到22:00）
         if (h < 22) {
           const time = `${String(h).padStart(2, '0')}:30`;
           const displayTime = formatTime(time);
@@ -1326,7 +1386,6 @@
         }
       }
 
-      // 22:00選項
       const endOption = document.createElement('option');
       endOption.value = '22:00';
       endOption.textContent = formatTime('22:00');
@@ -1414,12 +1473,10 @@
         if (isToday) dayDiv.classList.add('today');
         if (isSelected) dayDiv.classList.add('selected');
 
-        // 公開模式下，過去的日子不能選擇
         if (isPublicMode && date < today) {
           dayDiv.classList.add('disabled');
         }
 
-        // 非disabled的日子可以點選
         if (!dayDiv.classList.contains('disabled')) {
           dayDiv.addEventListener('click', () => toggleDateSelection(date));
         }
@@ -1584,60 +1641,74 @@
 
       let breakdownHTML = '';
       let totalPrice = 0;
+      let videoExtraTotal = 0;
 
       selectedDates.forEach(date => {
-        const holidayName = isPublicHoliday(date);
-        const isWeekendDay = isWeekend(date);
+        const rate = calculateRateForRoom(currentRoom, date, startTime);
         
-        const isHolidayRate = isWeekendDay || holidayName;
-        
-        let rate;
-        if (hasVideo && room.hasVideo) {
-          rate = isHolidayRate ? room.videoRates.weekend : room.videoRates.weekday;
-        } else {
-          rate = isHolidayRate ? room.rates.weekend : room.rates.weekday;
-        }
-        
-        const datePrice = Math.round(rate * hours);
+        let datePrice = Math.round(rate * hours);
         totalPrice += datePrice;
+
+        // 計算錄影服務額外費用
+        if (hasVideo && room.hasVideo) {
+          const videoExtra = calculateVideoExtra(currentRoom, date, startTime);
+          const videoExtraAmount = Math.round(videoExtra * hours);
+          videoExtraTotal += videoExtraAmount;
+          datePrice += videoExtraAmount;
+          totalPrice += videoExtraAmount;
+        }
 
         const dateStr = `${date.getMonth() + 1}月${date.getDate()}日`;
         const dayNames = ['日', '一', '二', '三', '四', '五', '六'];
         const dayStr = `星期${dayNames[date.getDay()]}`;
+        const holidayName = isPublicHoliday(date);
+        const isWeekendDay = isWeekend(date);
+        const [startHour, startMinute] = startTime.split(':').map(Number);
+        const isAfter2PM = startHour >= 14;
         
-        let natureLabel, cardClass, textColor, circleEmoji;
+        let natureLabel, cardClass, textColor, circleEmoji, rateDetail = '';
+        
         if (isWeekendDay) {
           natureLabel = '週末';
           cardClass = 'holiday-calc';
           textColor = '#991B1B';
           circleEmoji = ' 🔴';
+          
+          // 添加週末時間段說明
+          if (isAfter2PM) {
+            rateDetail = '（週末2PM後）';
+          } else {
+            rateDetail = '（週末2PM前）';
+          }
         } else if (holidayName) {
           natureLabel = `${holidayName}（公眾假期）`;
           cardClass = 'holiday-calc';
           textColor = '#991B1B';
           circleEmoji = ' 🔴';
+          rateDetail = '（假日全日）';
         } else {
           natureLabel = '普通工作日';
           cardClass = 'weekday-calc';
           textColor = '#166534';
           circleEmoji = '';
+          rateDetail = '（平日全日）';
         }
         
         const serviceType = (hasVideo && room.hasVideo) ? ' (含錄影)' : '';
-        const rateLabel = isHolidayRate ? '假日費率' : '平日費率';
+        const rateLabel = (isWeekendDay || holidayName) ? '假日費率' : '平日費率';
         
         breakdownHTML += `
           <div class="calculation-card ${cardClass}">
             <p class="text-xs font-bold mb-2" style="color: ${textColor}">📊 費用計算</p>
-            <div style="border-bottom: 2px dashed ${isHolidayRate ? '#FCA5A5' : '#86EFAC'}; padding-bottom: 8px; margin-bottom: 8px;">
+            <div style="border-bottom: 2px dashed ${(isWeekendDay || holidayName) ? '#FCA5A5' : '#86EFAC'}; padding-bottom: 8px; margin-bottom: 8px;">
               <p class="text-sm font-semibold mb-1" style="color: ${textColor}"><strong>日期：</strong>${dateStr} (${dayStr})${circleEmoji}</p>
-              <p class="text-sm font-semibold mb-1" style="color: ${textColor}"><strong>性質：</strong>${natureLabel}</p>
+              <p class="text-sm font-semibold mb-1" style="color: ${textColor}"><strong>性質：</strong>${natureLabel}${rateDetail}</p>
               <p class="text-sm font-semibold" style="color: ${textColor}"><strong>費率：</strong>${rateLabel} $${rate}/小時</p>
             </div>
             <p class="text-base font-bold mb-2" style="color: ${textColor}">
               ${room.name}${serviceType} × ${hours}小時
             </p>
-            <div style="border-top: 2px dashed ${isHolidayRate ? '#FCA5A5' : '#86EFAC'}; padding-top: 8px; margin-top: 8px;">
+            <div style="border-top: 2px dashed ${(isWeekendDay || holidayName) ? '#FCA5A5' : '#86EFAC'}; padding-top: 8px; margin-top: 8px;">
               <p class="text-sm font-semibold" style="color: ${textColor}">小計：<span class="text-lg font-bold">$${datePrice}</span></p>
             </div>
           </div>
@@ -1645,13 +1716,7 @@
       });
 
       if (room.hasVideo) {
-        let totalVideoExtra = 0;
-        selectedDates.forEach(date => {
-          const isHolidayRate = isWeekend(date) || isPublicHoliday(date);
-          const videoExtraCharge = isHolidayRate ? (room.videoRates.weekend - room.rates.weekend) : (room.videoRates.weekday - room.rates.weekday);
-          totalVideoExtra += Math.round(videoExtraCharge * hours);
-        });
-        document.getElementById('video-service-price').textContent = `+$${totalVideoExtra}`;
+        document.getElementById('video-service-price').textContent = `+$${videoExtraTotal}`;
       }
 
       const originalPrice = totalPrice;
@@ -2120,7 +2185,6 @@
       document.getElementById('edit-form').addEventListener('submit', async (e) => {
         e.preventDefault();
         
-        // 檢查時長規則
         const newStartTime = document.getElementById('edit-start-time').value;
         const newEndTime = document.getElementById('edit-end-time').value;
         const durationCheck = checkDurationRules(newStartTime, newEndTime);
@@ -2130,7 +2194,6 @@
           return;
         }
         
-        // 檢查時段衝突（排除自身）
         const conflict = checkTimeConflict(booking.room_id, booking.start_date, newStartTime, newEndTime, booking.id);
         
         if (conflict.conflict) {
@@ -2164,14 +2227,12 @@
     function generateTimeOptionsForEdit(selectedTime) {
       let options = '';
       for (let h = 8; h <= 22; h++) {
-        // 整點
         if (h < 22) {
           const time = `${String(h).padStart(2, '0')}:00`;
           const selected = time === selectedTime ? 'selected' : '';
           options += `<option value="${time}" ${selected}>${formatTime(time)}</option>`;
         }
         
-        // 半點
         if (h < 22) {
           const time = `${String(h).padStart(2, '0')}:30`;
           const selected = time === selectedTime ? 'selected' : '';
@@ -2179,7 +2240,6 @@
         }
       }
       
-      // 22:00選項
       const time = '22:00';
       const selected = time === selectedTime ? 'selected' : '';
       options += `<option value="${time}" ${selected}>${formatTime(time)}</option>`;
@@ -2277,5 +2337,5 @@
     // 頁面加載時初始化
     document.addEventListener('DOMContentLoaded', initializeApp);
   </script>
- </body>
+</body>
 </html>
