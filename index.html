@@ -456,6 +456,19 @@
       margin: 10px 0;
       display: none;
     }
+    
+    .holiday-badge {
+      position: absolute;
+      top: -2px;
+      left: -2px;
+      background: linear-gradient(135deg, #EF4444 0%, #DC2626 100%);
+      color: white;
+      font-size: 8px;
+      padding: 1px 4px;
+      border-radius: 4px;
+      font-weight: bold;
+      z-index: 4;
+    }
   </style>
 </head>
 <body class="h-full" style="background: linear-gradient(135deg, #FDF2F8 0%, #FCE7F3 100%);">
@@ -617,6 +630,7 @@
           <p>🔴 <strong>紅圈日期</strong> = 星期六、日及公眾假期（假日收費）</p>
           <p>✅ <strong>粉紅高亮</strong> = 您選擇的日期</p>
           <p>🔴 <strong>右上紅點</strong> = 當日已有預約</p>
+          <p>🎯 <strong>紅底標籤</strong> = 公眾假期名稱</p>
           <p>📅 <strong>週一至五（公眾假期外）</strong> = 按平日收費</p>
          </div>
         </div>
@@ -837,10 +851,48 @@
       { id: '2', name: '房間2', subtitle: '(直身琴伴奏)', area: '約50呎', capacity: '2-3人', equipment: '譜架', rates: { weekday: 80, weekend: 120 }, hasVideo: false }
     ];
 
-    // 完整的公眾假期數據
+    // 完整的公眾假期數據（2025年）
     const publicHolidays = {
+      // 2025年香港公眾假期
+      '2025-01-01': '元旦',
+      '2025-01-29': '農曆年初一',
+      '2025-01-30': '農曆年初二',
+      '2025-01-31': '農曆年初三',
+      '2025-04-04': '清明節',
+      '2025-04-18': '耶穌受難節',
+      '2025-04-19': '耶穌受難節翌日',
+      '2025-04-21': '復活節星期一',
+      '2025-05-01': '勞動節',
+      '2025-05-05': '佛誕',
+      '2025-06-09': '端午節',
+      '2025-07-01': '香港特別行政區成立紀念日',
+      '2025-09-08': '中秋節翌日',
+      '2025-10-01': '國慶日',
+      '2025-10-07': '重陽節',
+      '2025-12-25': '聖誕節',
+      '2025-12-26': '聖誕節後第一個周日',
+      
+      // 2026年香港公眾假期
+      '2026-01-01': '元旦',
+      '2026-02-17': '農曆年初一',
+      '2026-02-18': '農曆年初二',
+      '2026-02-19': '農曆年初三',
+      '2026-04-06': '清明節',
+      '2026-04-10': '耶穌受難節',
+      '2026-04-11': '耶穌受難節翌日',
+      '2026-04-13': '復活節星期一',
+      '2026-05-01': '勞動節',
+      '2026-05-25': '佛誕',
+      '2026-06-19': '端午節',
+      '2026-07-01': '香港特別行政區成立紀念日',
+      '2026-09-28': '中秋節翌日',
+      '2026-10-01': '國慶日',
+      '2026-10-26': '重陽節',
+      '2026-12-25': '聖誕節',
+      '2026-12-28': '聖誕節後第一個周日',
+      
       // 2027年假期
-      '2027-01-01': '一月一日',
+      '2027-01-01': '元旦',
       '2027-02-06': '農曆新年初一',
       '2027-02-07': '農曆新年初二',
       '2027-02-08': '農曆新年初三',
@@ -860,7 +912,7 @@
       '2027-12-27': '聖誕節後第一個周日',
       
       // 2028年假期
-      '2028-01-01': '一月一日',
+      '2028-01-01': '元旦',
       '2028-01-26': '農曆新年初一',
       '2028-01-27': '農曆新年初二',
       '2028-01-28': '農曆新年初三',
@@ -879,12 +931,12 @@
       '2028-12-26': '聖誕節後第一個周日'
     };
 
-    // 添加未來年份的假期（簡單預測）
+    // 添加2029年假期（簡單預測）
     function addFutureHolidays() {
       const currentYear = new Date().getFullYear();
       
       // 添加2029年假期（簡單估算）
-      publicHolidays['2029-01-01'] = '一月一日';
+      publicHolidays['2029-01-01'] = '元旦';
       publicHolidays['2029-02-13'] = '農曆新年初一';
       publicHolidays['2029-02-14'] = '農曆新年初二';
       publicHolidays['2029-02-15'] = '農曆新年初三';
@@ -1473,6 +1525,14 @@
         if (isToday) dayDiv.classList.add('today');
         if (isSelected) dayDiv.classList.add('selected');
 
+        // 添加公眾假期標籤
+        if (isPublicHolidayDate) {
+          const holidayBadge = document.createElement('div');
+          holidayBadge.className = 'holiday-badge';
+          holidayBadge.textContent = publicHolidays[dateStr];
+          dayDiv.appendChild(holidayBadge);
+        }
+
         if (isPublicMode && date < today) {
           dayDiv.classList.add('disabled');
         }
@@ -1518,10 +1578,18 @@
           const dateStr = `${d.getMonth() + 1}/${d.getDate()}`;
           const dayNames = ['日', '一', '二', '三', '四', '五', '六'];
           const dayStr = dayNames[d.getDay()];
-          const isHolidayRate = isWeekend(d) || isPublicHoliday(d);
+          const holidayName = isPublicHoliday(d);
+          const isWeekendDay = isWeekend(d);
+          const isHolidayRate = isWeekendDay || holidayName;
           
           const bgColor = isHolidayRate ? 'from-red-500 to-red-600' : 'from-pink-500 to-pink-600';
-          return `<span class="px-3 py-1 bg-gradient-to-r ${bgColor} text-white rounded-lg text-xs font-bold">${dateStr} (${dayStr})</span>`;
+          let holidayText = '';
+          
+          if (holidayName) {
+            holidayText = `<span class="ml-1 text-xs font-bold text-white bg-red-600 px-1 rounded">${holidayName}</span>`;
+          }
+          
+          return `<span class="px-3 py-1 bg-gradient-to-r ${bgColor} text-white rounded-lg text-xs font-bold">${dateStr} (${dayStr})${holidayText}</span>`;
         }).join('');
       }
     }
