@@ -5,8 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>房間預約管理系統 - 2026</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <script src="/_sdk/data_sdk.js"></script>
-  <script src="/_sdk/element_sdk.js"></script>
   <style>
     body {
       box-sizing: border-box;
@@ -436,7 +434,6 @@
       background: linear-gradient(135deg, #F3F4F6 0%, #E5E7EB 100%) !important;
     }
   </style>
-  <style>@view-transition { navigation: auto; }</style>
  </head>
  <body class="h-full" style="background: linear-gradient(135deg, #FDF2F8 0%, #FCE7F3 100%);">
   <!-- 登入遮罩 -->
@@ -718,7 +715,7 @@
     </section>
 
     <!-- 右側邊欄 (僅工作人員可見) -->
-    <aside id="sidebar" class="flex flex-col overflow-hidden border-l-4 border-pink-300 shadow-xl" style="width: 30%; background: linear-gradient(180deg, #FDF2F8 0%, #FCE7F3 100%);">
+    <aside id="sidebar" class="flex flex-col overflow-hidden border-l-4 border-pink-300 shadow-xl" style="width: 30%; background: linear-gradient(180deg, #FDF2F8 0%, #FCE7F3 100%); display: none;">
      <div class="flex-1 flex flex-col overflow-hidden">
       <div class="px-6 py-4 bg-white border-b-2 border-pink-300">
        <h2 class="text-xl font-bold text-pink-900 mb-3 flex items-center gap-2"><span class="text-2xl">📋</span> <span>預約清單</span></h2>
@@ -806,24 +803,15 @@
       '2026-12-26': '聖誕節後第一個周日'
     };
 
-    const defaultConfig = {
-      background_color: '#FDF2F8',
-      surface_color: '#FCE7F3',
-      text_color: '#831843',
-      primary_action_color: '#EC4899',
-      secondary_action_color: '#F59E0B',
-      font_family: 'system-ui',
-      font_size: 16,
-      company_name: '卡雅音樂教室',
-      contact_phone: '5400 1874',
-      address_info: '香港上水符興街43-45號1B室'
-    };
-
     const STAFF_PASSWORD = "kaya2026"; // 工作人員密碼
+
+    // 使用 localStorage 來儲存預約數據
+    const STORAGE_KEY = 'kaya_music_bookings';
+    const DEFAULT_BOOKINGS = [];
 
     let bookings = [];
     let selectedDates = [];
-    let currentCalendarMonth = new Date();
+    let currentCalendarMonth = new Date(2026, 0, 1); // 設為2026年1月
     let currentRoom = '';
     let currentRoomFilter = '';
     let currentStatusFilter = '';
@@ -831,63 +819,62 @@
     let isStaffMode = false;
     let isPublicMode = false;
 
-    const dataHandler = {
-      onDataChanged(data) {
-        bookings = data;
-        if (isStaffMode) {
-          renderBookingList();
-          updateStatistics();
+    // 載入預約數據
+    function loadBookings() {
+      try {
+        const saved = localStorage.getItem(STORAGE_KEY);
+        if (saved) {
+          const parsed = JSON.parse(saved);
+          // 確保每個預約都有必要的字段
+          bookings = parsed.map(booking => ({
+            id: booking.id || Date.now().toString() + Math.random().toString(36).substr(2, 9),
+            room_id: booking.room_id || '',
+            start_date: booking.start_date || '',
+            start_time: booking.start_time || '',
+            end_time: booking.end_time || '',
+            user_name: booking.user_name || '',
+            phone: booking.phone || '',
+            purpose: booking.purpose || '一般預約',
+            total_amount: booking.total_amount || 0,
+            original_amount: booking.original_amount || booking.total_amount || 0,
+            payment_status: booking.payment_status || 'pending',
+            is_returning_customer: booking.is_returning_customer || false,
+            manual_price_override: booking.manual_price_override || false,
+            created_at: booking.created_at || new Date().toISOString(),
+            has_video_service: booking.has_video_service || false,
+            date_nature: booking.date_nature || '平日',
+            is_past_date: booking.is_past_date || false
+          }));
+        } else {
+          bookings = DEFAULT_BOOKINGS;
         }
-        renderCalendar();
+      } catch (e) {
+        console.error('載入預約數據失敗:', e);
+        bookings = DEFAULT_BOOKINGS;
       }
-    };
+    }
 
-    async function initializeApp() {
-      const initResult = await window.dataSdk.init(dataHandler);
-      if (!initResult.isOk) {
-        console.error('Failed to initialize data SDK');
-        return;
+    // 儲存預約數據
+    function saveBookings() {
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(bookings));
+      } catch (e) {
+        console.error('儲存預約數據失敗:', e);
       }
+    }
 
-      if (window.elementSdk) {
-        await window.elementSdk.init({
-          defaultConfig,
-          onConfigChange: async (config) => {
-            const companyNameEl = document.getElementById('company-name');
-            if (companyNameEl) {
-              companyNameEl.textContent = config.company_name || defaultConfig.company_name;
-              companyNameEl.style.fontFamily = `${config.font_family || defaultConfig.font_family}, 'Microsoft JhengHei', sans-serif`;
-            }
-
-            const contactPhoneEl = document.getElementById('contact-phone');
-            if (contactPhoneEl) contactPhoneEl.textContent = config.contact_phone || defaultConfig.contact_phone;
-
-            const addressInfoEl = document.getElementById('address-info');
-            if (addressInfoEl) addressInfoEl.textContent = config.address_info || defaultConfig.address_info;
-          },
-          mapToCapabilities: (config) => ({
-            recolorables: [
-              { get: () => config.background_color || defaultConfig.background_color, set: (v) => { config.background_color = v; window.elementSdk.setConfig({ background_color: v }); } },
-              { get: () => config.surface_color || defaultConfig.surface_color, set: (v) => { config.surface_color = v; window.elementSdk.setConfig({ surface_color: v }); } },
-              { get: () => config.text_color || defaultConfig.text_color, set: (v) => { config.text_color = v; window.elementSdk.setConfig({ text_color: v }); } },
-              { get: () => config.primary_action_color || defaultConfig.primary_action_color, set: (v) => { config.primary_action_color = v; window.elementSdk.setConfig({ primary_action_color: v }); } },
-              { get: () => config.secondary_action_color || defaultConfig.secondary_action_color, set: (v) => { config.secondary_action_color = v; window.elementSdk.setConfig({ secondary_action_color: v }); } }
-            ],
-            borderables: [],
-            fontEditable: { get: () => config.font_family || defaultConfig.font_family, set: (v) => { config.font_family = v; window.elementSdk.setConfig({ font_family: v }); } },
-            fontSizeable: { get: () => config.font_size || defaultConfig.font_size, set: (v) => { config.font_size = v; window.elementSdk.setConfig({ font_size: v }); } }
-          }),
-          mapToEditPanelValues: (config) => new Map([
-            ['company_name', config.company_name || defaultConfig.company_name],
-            ['contact_phone', config.contact_phone || defaultConfig.contact_phone],
-            ['address_info', config.address_info || defaultConfig.address_info]
-          ])
-        });
-      }
-
+    // 初始化應用
+    function initializeApp() {
+      loadBookings();
       initializeEventListeners();
       generateTimeOptions();
       setupLoginMode();
+      
+      // 自動顯示當月
+      currentCalendarMonth = new Date();
+      if (currentCalendarMonth.getFullYear() !== 2026) {
+        currentCalendarMonth = new Date(2026, 0, 1);
+      }
     }
 
     function setupLoginMode() {
@@ -947,6 +934,9 @@
     function initializeEventListeners() {
       document.getElementById('today-btn').addEventListener('click', () => {
         currentCalendarMonth = new Date();
+        if (currentCalendarMonth.getFullYear() !== 2026) {
+          currentCalendarMonth = new Date(2026, currentCalendarMonth.getMonth(), 1);
+        }
         renderCalendar();
       });
 
@@ -1497,12 +1487,8 @@
           is_past_date: isPastDate
         };
 
-        const result = await window.dataSdk.create(booking);
-        if (result.isOk) {
-          successCount++;
-        } else {
-          errorMessages.push(`${dateStr} 預約失敗`);
-        }
+        bookings.push(booking);
+        successCount++;
       }
 
       btn.disabled = false;
@@ -1513,6 +1499,7 @@
       }
 
       if (successCount > 0) {
+        saveBookings(); // 儲存到 localStorage
         const statusText = paymentStatus === 'paid' ? '已付款' : '待付款';
         showToast(`✅ 成功創建 ${successCount} 筆預約（${statusText}）`, 'success');
         resetForm();
@@ -1611,7 +1598,7 @@
           : '<span class="status-badge status-pending">⏳ 待付款</span>';
 
         const payButton = booking.payment_status === 'pending' 
-          ? `<button class="btn-pay" onclick="confirmPayment('${booking.__backendId}')">💰 確認付款</button>` 
+          ? `<button class="btn-pay" onclick="confirmPayment('${booking.id}')">💰 確認付款</button>` 
           : '';
 
         return `
@@ -1635,8 +1622,8 @@
             
             <div class="flex gap-2">
               ${payButton}
-              <button class="btn-edit flex-1" onclick="editBooking('${booking.__backendId}')">✏️ 編輯</button>
-              <button class="btn-delete flex-1" onclick="deleteBooking('${booking.__backendId}')">🗑️ 取消</button>
+              <button class="btn-edit flex-1" onclick="editBooking('${booking.id}')">✏️ 編輯</button>
+              <button class="btn-delete flex-1" onclick="deleteBooking('${booking.id}')">🗑️ 取消</button>
             </div>
           </div>
         `;
@@ -1644,7 +1631,7 @@
     }
 
     window.confirmPayment = async function(bookingId) {
-      const booking = bookings.find(b => b.__backendId === bookingId);
+      const booking = bookings.find(b => b.id === bookingId);
       if (!booking) return;
 
       const modal = document.createElement('div');
@@ -1663,18 +1650,12 @@
       document.body.appendChild(modal);
 
       document.getElementById('confirm-pay').addEventListener('click', async () => {
-        const updatedBooking = {
-          ...booking,
-          payment_status: 'paid'
-        };
-
-        const result = await window.dataSdk.update(updatedBooking);
-        if (result.isOk) {
-          showToast('✅ 付款狀態已更新', 'success');
-          document.body.removeChild(modal);
-        } else {
-          showToast('❌ 更新失敗', 'error');
-        }
+        booking.payment_status = 'paid';
+        saveBookings();
+        showToast('✅ 付款狀態已更新', 'success');
+        document.body.removeChild(modal);
+        renderBookingList();
+        updateStatistics();
       });
 
       document.getElementById('cancel-pay').addEventListener('click', () => {
@@ -1683,7 +1664,7 @@
     };
 
     window.editBooking = function(bookingId) {
-      const booking = bookings.find(b => b.__backendId === bookingId);
+      const booking = bookings.find(b => b.id === bookingId);
       if (!booking) return;
 
       const modal = document.createElement('div');
@@ -1747,24 +1728,19 @@
         e.preventDefault();
         
         const newPrice = parseInt(document.getElementById('edit-price').value);
-        const updatedBooking = {
-          ...booking,
-          user_name: document.getElementById('edit-name').value,
-          phone: document.getElementById('edit-phone').value,
-          start_time: document.getElementById('edit-start-time').value,
-          end_time: document.getElementById('edit-end-time').value,
-          payment_status: document.getElementById('edit-payment-status').value,
-          total_amount: newPrice,
-          manual_price_override: newPrice !== booking.original_amount
-        };
+        booking.user_name = document.getElementById('edit-name').value;
+        booking.phone = document.getElementById('edit-phone').value;
+        booking.start_time = document.getElementById('edit-start-time').value;
+        booking.end_time = document.getElementById('edit-end-time').value;
+        booking.payment_status = document.getElementById('edit-payment-status').value;
+        booking.total_amount = newPrice;
+        booking.manual_price_override = newPrice !== booking.original_amount;
 
-        const result = await window.dataSdk.update(updatedBooking);
-        if (result.isOk) {
-          showToast('✅ 預約已更新', 'success');
-          document.body.removeChild(modal);
-        } else {
-          showToast('❌ 更新失敗', 'error');
-        }
+        saveBookings();
+        showToast('✅ 預約已更新', 'success');
+        document.body.removeChild(modal);
+        renderBookingList();
+        updateStatistics();
       });
 
       document.getElementById('cancel-edit').addEventListener('click', () => {
@@ -1786,7 +1762,7 @@
     }
 
     window.deleteBooking = function(bookingId) {
-      const booking = bookings.find(b => b.__backendId === bookingId);
+      const booking = bookings.find(b => b.id === bookingId);
       if (!booking) return;
 
       const modal = document.createElement('div');
@@ -1805,12 +1781,15 @@
       document.body.appendChild(modal);
 
       document.getElementById('confirm-delete').addEventListener('click', async () => {
-        const result = await window.dataSdk.delete(booking);
-        if (result.isOk) {
+        const index = bookings.findIndex(b => b.id === bookingId);
+        if (index > -1) {
+          bookings.splice(index, 1);
+          saveBookings();
           showToast('✅ 預約已取消', 'success');
           document.body.removeChild(modal);
-        } else {
-          showToast('❌ 取消失敗', 'error');
+          renderBookingList();
+          renderCalendar();
+          updateStatistics();
         }
       });
 
@@ -1869,7 +1848,8 @@
       }, 3000);
     }
 
-    initializeApp();
+    // 頁面加載時初始化
+    document.addEventListener('DOMContentLoaded', initializeApp);
   </script>
  </body>
 </html>
