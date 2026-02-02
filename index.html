@@ -3,7 +3,7 @@
  <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>房間預約管理系統 - 2026</title>
+  <title>房間預約管理系統</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
     body {
@@ -447,6 +447,15 @@
       margin: 10px 0;
       display: none;
     }
+    
+    .duration-warning {
+      background: linear-gradient(135deg, #FEE2E2 0%, #FECACA 100%);
+      border: 2px solid #F87171;
+      border-radius: 8px;
+      padding: 12px;
+      margin: 10px 0;
+      display: none;
+    }
   </style>
  </head>
  <body class="h-full" style="background: linear-gradient(135deg, #FDF2F8 0%, #FCE7F3 100%);">
@@ -507,9 +516,7 @@
         </div>
        </div>
        <div class="text-white text-right">
-        <div class="text-3xl font-bold">
-         2026
-        </div>
+        <div class="text-3xl font-bold" id="current-year-display"></div>
         <div class="text-xs font-semibold text-pink-100">
          年度預約系統
         </div>
@@ -582,7 +589,7 @@
        <!-- 日期選擇 -->
        <div class="bg-white rounded-xl border-3 border-pink-300 p-6 shadow-lg">
         <div class="flex justify-between items-center mb-4">
-         <h3 class="text-lg font-bold text-pink-900">📅 選擇日期（2026年，可多選）</h3>
+         <h3 class="text-lg font-bold text-pink-900">📅 選擇日期（可多選）</h3>
          <div class="flex gap-2">
           <button type="button" id="today-btn" class="bg-white text-pink-600 border-2 border-pink-400 px-3 py-1 rounded-lg text-sm font-bold hover:bg-pink-50">本月</button>
           <button type="button" id="prev-month-btn" class="bg-white text-pink-600 border-2 border-pink-400 px-3 py-1 rounded-lg text-sm font-bold hover:bg-pink-50">上月</button>
@@ -628,12 +635,18 @@
        <!-- 時段選擇 -->
        <div class="bg-white rounded-xl border-3 border-pink-300 p-6 shadow-lg">
         <h3 class="text-lg font-bold text-pink-900 mb-2">⏰ 選擇預約時段</h3>
-        <p class="text-xs text-pink-700 mb-4">💡 請選擇開始與結束時間（每15分鐘為單位，8:00-22:00）</p>
+        <p class="text-xs text-pink-700 mb-4">💡 請選擇開始與結束時間（最少1小時，1小時後每半小時增加）</p>
         
         <!-- 時段衝突警告 -->
         <div id="time-conflict-warning" class="time-conflict-warning">
           <p class="text-sm font-bold text-amber-900 mb-1">⚠️ 時段衝突警告</p>
           <p class="text-xs text-amber-800" id="conflict-message"></p>
+        </div>
+        
+        <!-- 時長警告 -->
+        <div id="duration-warning" class="duration-warning">
+          <p class="text-sm font-bold text-red-900 mb-1">⚠️ 預約時長限制</p>
+          <p class="text-xs text-red-800" id="duration-message">每次預約最少1小時，1小時後可每半小時增加</p>
         </div>
         
         <div class="grid grid-cols-3 gap-4">
@@ -649,8 +662,17 @@
            <option value="">請選擇</option>
           </select>
          </div>
-         <div class="flex items-end">
-          <button type="button" id="all-day-btn" class="bg-white text-pink-600 border-2 border-pink-400 px-4 py-3 rounded-lg font-bold hover:bg-pink-50 w-full">🌞 選擇全日</button>
+         <div class="flex flex-col gap-2">
+          <div class="flex gap-2">
+           <button type="button" data-hours="1" class="duration-btn bg-white text-pink-600 border-2 border-pink-400 px-3 py-2 rounded-lg text-sm font-bold hover:bg-pink-50 flex-1">1小時</button>
+           <button type="button" data-hours="1.5" class="duration-btn bg-white text-pink-600 border-2 border-pink-400 px-3 py-2 rounded-lg text-sm font-bold hover:bg-pink-50 flex-1">1.5小時</button>
+           <button type="button" data-hours="2" class="duration-btn bg-white text-pink-600 border-2 border-pink-400 px-3 py-2 rounded-lg text-sm font-bold hover:bg-pink-50 flex-1">2小時</button>
+          </div>
+          <div class="flex gap-2">
+           <button type="button" data-hours="2.5" class="duration-btn bg-white text-pink-600 border-2 border-pink-400 px-3 py-2 rounded-lg text-sm font-bold hover:bg-pink-50 flex-1">2.5小時</button>
+           <button type="button" data-hours="3" class="duration-btn bg-white text-pink-600 border-2 border-pink-400 px-3 py-2 rounded-lg text-sm font-bold hover:bg-pink-50 flex-1">3小時</button>
+           <button type="button" data-hours="4" class="duration-btn bg-white text-pink-600 border-2 border-pink-400 px-3 py-2 rounded-lg text-sm font-bold hover:bg-pink-50 flex-1">4小時</button>
+          </div>
          </div>
         </div>
         <div class="mt-4 bg-pink-50 border-2 border-pink-300 rounded-lg p-3">
@@ -815,25 +837,52 @@
       { id: '2', name: '房間2', subtitle: '(直身琴伴奏)', area: '約50呎', capacity: '2-3人', equipment: '譜架', rates: { weekday: 80, weekend: 120 }, hasVideo: false }
     ];
 
-    const publicHolidays = {
-      '2026-01-01': '元旦',
-      '2026-02-17': '農曆年初一',
-      '2026-02-18': '農曆年初二',
-      '2026-02-19': '農曆年初三',
-      '2026-04-03': '耶穌受難節',
-      '2026-04-04': '耶穌受難節翌日',
-      '2026-04-06': '清明節翌日',
-      '2026-04-07': '復活節星期一翌日',
-      '2026-05-01': '勞動節',
-      '2026-05-25': '佛誕翌日',
-      '2026-06-19': '端午節',
-      '2026-07-01': '香港特區成立紀念日',
-      '2026-09-26': '中秋節翌日',
-      '2026-10-01': '國慶日',
-      '2026-10-19': '重陽節翌日',
-      '2026-12-25': '聖誕節',
-      '2026-12-26': '聖誕節後第一個周日'
-    };
+    // 動態生成公眾假期（未來3年）
+    const publicHolidays = generatePublicHolidays();
+
+    function generatePublicHolidays() {
+      const holidays = {};
+      const currentYear = new Date().getFullYear();
+      
+      // 為當前年份和未來2年生成假期
+      for (let year = currentYear; year <= currentYear + 2; year++) {
+        // 固定日期假期
+        holidays[`${year}-01-01`] = '元旦';
+        holidays[`${year}-05-01`] = '勞動節';
+        holidays[`${year}-07-01`] = '香港特區成立紀念日';
+        holidays[`${year}-10-01`] = '國慶日';
+        holidays[`${year}-12-25`] = '聖誕節';
+        holidays[`${year}-12-26`] = '聖誕節後第一個周日';
+        
+        // 農曆假期（簡單估算，實際需要準確計算）
+        // 這裡使用近似日期，實際使用時應使用準確的農曆計算
+        const lunarNewYearDates = getLunarNewYearDates(year);
+        holidays[`${year}-${lunarNewYearDates.day1}`] = '農曆年初一';
+        holidays[`${year}-${lunarNewYearDates.day2}`] = '農曆年初二';
+        holidays[`${year}-${lunarNewYearDates.day3}`] = '農曆年初三';
+        
+        // 其他節日（使用近似日期）
+        holidays[`${year}-04-04`] = '清明節';
+        holidays[`${year}-06-20`] = '端午節';
+        holidays[`${year}-09-27`] = '中秋節翌日';
+        holidays[`${year}-10-20`] = '重陽節翌日';
+      }
+      
+      return holidays;
+    }
+
+    function getLunarNewYearDates(year) {
+      // 簡化的農曆新年日期（實際應使用準確計算）
+      const lunarDates = {
+        2024: { day1: '02-10', day2: '02-11', day3: '02-12' },
+        2025: { day1: '01-29', day2: '01-30', day3: '01-31' },
+        2026: { day1: '02-17', day2: '02-18', day3: '02-19' },
+        2027: { day1: '02-06', day2: '02-07', day3: '02-08' },
+        2028: { day1: '01-26', day2: '01-27', day3: '01-28' }
+      };
+      
+      return lunarDates[year] || { day1: '02-01', day2: '02-02', day3: '02-03' };
+    }
 
     const STAFF_PASSWORD = "kaya2026"; // 工作人員密碼
 
@@ -843,7 +892,7 @@
 
     let bookings = [];
     let selectedDates = [];
-    let currentCalendarMonth = new Date(2026, 0, 1); // 設為2026年1月
+    let currentCalendarMonth = new Date(); // 設為當前月份
     let currentRoom = '';
     let currentRoomFilter = '';
     let currentStatusFilter = '';
@@ -937,6 +986,31 @@
       return { conflict: false };
     }
 
+    // 檢查時長是否符合規則
+    function checkDurationRules(startTime, endTime) {
+      if (!startTime || !endTime) return { valid: false, message: '請選擇時段' };
+      
+      const [startH, startM] = startTime.split(':').map(Number);
+      const [endH, endM] = endTime.split(':').map(Number);
+      const durationMinutes = (endH * 60 + endM) - (startH * 60 + startM);
+      
+      // 最少1小時
+      if (durationMinutes < 60) {
+        return { valid: false, message: '預約時長最少1小時' };
+      }
+      
+      // 檢查是否符合半小時增量規則（1小時後每半小時增加）
+      const hours = durationMinutes / 60;
+      
+      // 允許的時長：1小時, 1.5小時, 2小時, 2.5小時, 3小時, 3.5小時... 以此類推
+      const remainder = hours % 0.5;
+      if (remainder > 0.01 && remainder < 0.49) { // 容許浮點數誤差
+        return { valid: false, message: '時長必須是整小時或半小時（如：1小時、1.5小時、2小時、2.5小時）' };
+      }
+      
+      return { valid: true, hours: hours };
+    }
+
     // 更新時段衝突警告
     function updateTimeConflictWarning() {
       const warningDiv = document.getElementById('time-conflict-warning');
@@ -977,6 +1051,27 @@
       }
     }
 
+    // 更新時長警告
+    function updateDurationWarning() {
+      const warningDiv = document.getElementById('duration-warning');
+      
+      const startTime = document.getElementById('start-time-select').value;
+      const endTime = document.getElementById('end-time-select').value;
+
+      if (!startTime || !endTime) {
+        warningDiv.style.display = 'none';
+        return;
+      }
+
+      const durationCheck = checkDurationRules(startTime, endTime);
+      
+      if (!durationCheck.valid) {
+        warningDiv.style.display = 'block';
+      } else {
+        warningDiv.style.display = 'none';
+      }
+    }
+
     // 初始化應用
     function initializeApp() {
       loadBookings();
@@ -984,11 +1079,13 @@
       generateTimeOptions();
       setupLoginMode();
       
+      // 更新當前年份顯示
+      const currentYear = new Date().getFullYear();
+      document.getElementById('current-year-display').textContent = currentYear;
+      
       // 自動顯示當月
       currentCalendarMonth = new Date();
-      if (currentCalendarMonth.getFullYear() !== 2026) {
-        currentCalendarMonth = new Date(2026, currentCalendarMonth.getMonth(), 1);
-      }
+      renderCalendar();
     }
 
     function setupLoginMode() {
@@ -1059,9 +1156,6 @@
     function initializeEventListeners() {
       document.getElementById('today-btn').addEventListener('click', () => {
         currentCalendarMonth = new Date();
-        if (currentCalendarMonth.getFullYear() !== 2026) {
-          currentCalendarMonth = new Date(2026, currentCalendarMonth.getMonth(), 1);
-        }
         renderCalendar();
       });
 
@@ -1083,27 +1177,55 @@
           showRoomInfo(currentRoom);
           calculatePrice();
           updateTimeConflictWarning();
+          updateDurationWarning();
         });
       });
 
-      document.getElementById('all-day-btn').addEventListener('click', () => {
-        document.getElementById('start-time-select').value = '08:00';
-        document.getElementById('end-time-select').value = '22:00';
-        updateSelectedTimeDisplay();
-        calculatePrice();
-        updateTimeConflictWarning();
+      // 時長按鈕事件
+      document.querySelectorAll('.duration-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const startTime = document.getElementById('start-time-select').value;
+          if (!startTime) {
+            showToast('請先選擇開始時間', 'warning');
+            return;
+          }
+          
+          const hours = parseFloat(btn.dataset.hours);
+          const [startH, startM] = startTime.split(':').map(Number);
+          const totalMinutes = startH * 60 + startM + (hours * 60);
+          
+          let endH = Math.floor(totalMinutes / 60);
+          let endM = totalMinutes % 60;
+          
+          // 如果超過22:00，調整到22:00
+          if (endH > 22 || (endH === 22 && endM > 0)) {
+            endH = 22;
+            endM = 0;
+            showToast('結束時間已調整至22:00', 'info');
+          }
+          
+          const endTime = `${String(endH).padStart(2, '0')}:${String(endM).padStart(2, '0')}`;
+          document.getElementById('end-time-select').value = endTime;
+          
+          updateSelectedTimeDisplay();
+          calculatePrice();
+          updateTimeConflictWarning();
+          updateDurationWarning();
+        });
       });
 
       document.getElementById('start-time-select').addEventListener('change', () => {
         updateSelectedTimeDisplay();
         calculatePrice();
         updateTimeConflictWarning();
+        updateDurationWarning();
       });
 
       document.getElementById('end-time-select').addEventListener('change', () => {
         updateSelectedTimeDisplay();
         calculatePrice();
         updateTimeConflictWarning();
+        updateDurationWarning();
       });
 
       document.getElementById('purpose-select').addEventListener('change', calculatePrice);
@@ -1169,9 +1291,27 @@
       startSelect.innerHTML = '<option value="">請選擇</option>';
       endSelect.innerHTML = '<option value="">請選擇</option>';
 
-      for (let h = 8; h < 22; h++) {
-        for (let m = 0; m < 60; m += 15) {
-          const time = `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
+      // 只生成整點和半點選項
+      for (let h = 8; h <= 22; h++) {
+        // 整點
+        if (h < 22) {
+          const time = `${String(h).padStart(2, '0')}:00`;
+          const displayTime = formatTime(time);
+          
+          const option1 = document.createElement('option');
+          option1.value = time;
+          option1.textContent = displayTime;
+          startSelect.appendChild(option1);
+
+          const option2 = document.createElement('option');
+          option2.value = time;
+          option2.textContent = displayTime;
+          endSelect.appendChild(option2);
+        }
+        
+        // 半點（除了22:30，因為最晚到22:00）
+        if (h < 22) {
+          const time = `${String(h).padStart(2, '0')}:30`;
           const displayTime = formatTime(time);
           
           const option1 = document.createElement('option');
@@ -1186,6 +1326,7 @@
         }
       }
 
+      // 22:00選項
       const endOption = document.createElement('option');
       endOption.value = '22:00';
       endOption.textContent = formatTime('22:00');
@@ -1210,14 +1351,9 @@
         const [startH, startM] = startTime.split(':').map(Number);
         const [endH, endM] = endTime.split(':').map(Number);
         const durationMinutes = (endH * 60 + endM) - (startH * 60 + startM);
-        const hours = Math.floor(durationMinutes / 60);
-        const minutes = durationMinutes % 60;
+        const hours = durationMinutes / 60;
         
-        let durationText = '';
-        if (hours > 0) durationText += `${hours}小時`;
-        if (minutes > 0) durationText += `${minutes}分鐘`;
-        
-        display.innerHTML = `${formatTime(startTime)} - ${formatTime(endTime)} <span class="text-pink-600">(總時長：${durationText})</span>`;
+        display.innerHTML = `${formatTime(startTime)} - ${formatTime(endTime)} <span class="text-pink-600">(總時長：${hours}小時)</span>`;
       }
     }
 
@@ -1309,6 +1445,7 @@
       renderCalendar();
       calculatePrice();
       updateTimeConflictWarning();
+      updateDurationWarning();
     }
 
     function updateSelectedDatesDisplay() {
@@ -1418,10 +1555,18 @@
         return;
       }
 
+      // 檢查時長規則
+      const durationCheck = checkDurationRules(startTime, endTime);
+      if (!durationCheck.valid) {
+        document.getElementById('price-breakdown').innerHTML = `<p class="text-red-600 font-bold text-center">${durationCheck.message}</p>`;
+        return;
+      }
+
       const purpose = document.getElementById('purpose-select').value;
       const isReturning = isStaffMode ? document.getElementById('is-returning-customer').checked : false;
       const room = rooms.find(r => r.id === currentRoom);
       const hasVideo = document.getElementById('video-service-checkbox').checked;
+      const hours = durationCheck.hours;
 
       if (room.hasVideo) {
         document.getElementById('video-service-option').style.display = 'block';
@@ -1436,11 +1581,6 @@
         document.getElementById('discount-display').style.display = 'none';
         return;
       }
-
-      const [startH, startM] = startTime.split(':').map(Number);
-      const [endH, endM] = endTime.split(':').map(Number);
-      const durationMinutes = (endH * 60 + endM) - (startH * 60 + startM);
-      const hours = durationMinutes / 60;
 
       let breakdownHTML = '';
       let totalPrice = 0;
@@ -1495,7 +1635,7 @@
               <p class="text-sm font-semibold" style="color: ${textColor}"><strong>費率：</strong>${rateLabel} $${rate}/小時</p>
             </div>
             <p class="text-base font-bold mb-2" style="color: ${textColor}">
-              ${room.name}${serviceType} × ${hours.toFixed(1)}小時
+              ${room.name}${serviceType} × ${hours}小時
             </p>
             <div style="border-top: 2px dashed ${isHolidayRate ? '#FCA5A5' : '#86EFAC'}; padding-top: 8px; margin-top: 8px;">
               <p class="text-sm font-semibold" style="color: ${textColor}">小計：<span class="text-lg font-bold">$${datePrice}</span></p>
@@ -1546,6 +1686,13 @@
 
       if (!startTime || !endTime) {
         showToast('請選擇時間', 'error');
+        return;
+      }
+
+      // 檢查時長規則
+      const durationCheck = checkDurationRules(startTime, endTime);
+      if (!durationCheck.valid) {
+        showToast(`⚠️ ${durationCheck.message}`, 'warning');
         return;
       }
 
@@ -1649,6 +1796,13 @@
         return;
       }
 
+      // 檢查時長規則
+      const durationCheck = checkDurationRules(startTime, endTime);
+      if (!durationCheck.valid) {
+        showToast(`⚠️ ${durationCheck.message}`, 'warning');
+        return;
+      }
+
       // 檢查時段衝突
       let hasTimeConflict = false;
       for (const date of selectedDates) {
@@ -1742,6 +1896,7 @@
       updateSelectedTimeDisplay();
       updateDateNatureAlerts();
       updateTimeConflictWarning();
+      updateDurationWarning();
       renderCalendar();
       document.getElementById('room-info').style.display = 'none';
       document.getElementById('price-breakdown').innerHTML = '<p class="text-gray-500 text-center text-sm">請選擇房間、日期和時段</p>';
@@ -1802,7 +1957,7 @@
         const dateObj = new Date(booking.start_date);
         const dayNames = ['日', '一', '二', '三', '四', '五', '六'];
         
-        let dateStr = `${dateObj.getMonth() + 1}/${dateObj.getDate()} 星期${dayNames[dateObj.getDay()]}`;
+        let dateStr = `${dateObj.getFullYear()}/${dateObj.getMonth() + 1}/${dateObj.getDate()} 星期${dayNames[dateObj.getDay()]}`;
         let dateLabel = '';
         
         const dateNature = booking.date_nature || '';
@@ -1965,9 +2120,17 @@
       document.getElementById('edit-form').addEventListener('submit', async (e) => {
         e.preventDefault();
         
-        // 檢查時段衝突（排除自身）
+        // 檢查時長規則
         const newStartTime = document.getElementById('edit-start-time').value;
         const newEndTime = document.getElementById('edit-end-time').value;
+        const durationCheck = checkDurationRules(newStartTime, newEndTime);
+        
+        if (!durationCheck.valid) {
+          showToast(`⚠️ ${durationCheck.message}`, 'warning');
+          return;
+        }
+        
+        // 檢查時段衝突（排除自身）
         const conflict = checkTimeConflict(booking.room_id, booking.start_date, newStartTime, newEndTime, booking.id);
         
         if (conflict.conflict) {
@@ -2001,13 +2164,26 @@
     function generateTimeOptionsForEdit(selectedTime) {
       let options = '';
       for (let h = 8; h <= 22; h++) {
-        for (let m = 0; m < 60; m += 15) {
-          if (h === 22 && m > 0) break;
-          const time = `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
+        // 整點
+        if (h < 22) {
+          const time = `${String(h).padStart(2, '0')}:00`;
+          const selected = time === selectedTime ? 'selected' : '';
+          options += `<option value="${time}" ${selected}>${formatTime(time)}</option>`;
+        }
+        
+        // 半點
+        if (h < 22) {
+          const time = `${String(h).padStart(2, '0')}:30`;
           const selected = time === selectedTime ? 'selected' : '';
           options += `<option value="${time}" ${selected}>${formatTime(time)}</option>`;
         }
       }
+      
+      // 22:00選項
+      const time = '22:00';
+      const selected = time === selectedTime ? 'selected' : '';
+      options += `<option value="${time}" ${selected}>${formatTime(time)}</option>`;
+      
       return options;
     }
 
@@ -2051,7 +2227,7 @@
     function updateStatistics() {
       if (!isStaffMode) return;
       
-      const currentYear = 2026;
+      const currentYear = new Date().getFullYear();
       const currentMonth = new Date().getMonth();
       
       const paidBookings = bookings.filter(b => b.payment_status === 'paid');
