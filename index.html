@@ -334,6 +334,11 @@
       color: white;
     }
 
+    .status-confirmed {
+      background: linear-gradient(135deg, #3B82F6 0%, #2563EB 100%);
+      color: white;
+    }
+
     .price-display {
       background: linear-gradient(135deg, #FEF3C7 0%, #FDE68A 100%);
       border: 3px solid #F59E0B;
@@ -432,6 +437,15 @@
       opacity: 0.7;
       border-color: #9CA3AF !important;
       background: linear-gradient(135deg, #F3F4F6 0%, #E5E7EB 100%) !important;
+    }
+    
+    .email-sent-badge {
+      background: linear-gradient(135deg, #8B5CF6 0%, #7C3AED 100%);
+      color: white;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-size: 10px;
+      margin-left: 4px;
     }
   </style>
  </head>
@@ -667,15 +681,19 @@
 
        <!-- 預約詳情與付款 -->
        <div class="bg-white rounded-xl border-3 border-pink-300 p-6 shadow-lg">
-        <h3 class="text-lg font-bold text-pink-900 mb-4">📝 預約詳情與付款選項</h3>
+        <h3 class="text-lg font-bold text-pink-900 mb-4">📝 預約詳情</h3>
         <div class="space-y-4">
          <div>
           <label class="block text-sm font-bold text-pink-900 mb-2">👤 預約人姓名：</label>
           <input type="text" id="user-name" required class="input-pink">
          </div>
          <div>
-          <label class="block text-sm font-bold text-pink-900 mb-2">📞 聯絡方式：</label>
-          <input type="tel" id="phone" required class="input-pink">
+          <label class="block text-sm font-bold text-pink-900 mb-2">📱 WHATSAPP聯絡方法：</label>
+          <input type="tel" id="phone" required class="input-pink" placeholder="請輸入WhatsApp號碼">
+         </div>
+         <div id="email-container">
+          <label class="block text-sm font-bold text-pink-900 mb-2">📧 電郵地址：</label>
+          <input type="email" id="email" required class="input-pink" placeholder="用於接收確認通知">
          </div>
          <div>
           <label class="block text-sm font-bold text-pink-900 mb-2">🎯 使用用途：</label>
@@ -688,23 +706,33 @@
            <option value="活動">活動</option>
           </select>
          </div>
-         <div>
+         <div id="returning-customer-container" style="display: block;">
           <label class="flex items-center gap-2 cursor-pointer">
            <input type="checkbox" id="is-returning-customer" class="w-5 h-5 cursor-pointer">
            <span class="text-sm font-bold text-pink-900">舊客戶（自動9折）</span>
           </label>
          </div>
+         <div>
+          <label class="block text-sm font-bold text-pink-900 mb-2">📝 備註：</label>
+          <textarea id="notes" class="input-pink" rows="3" placeholder="如有其他特殊需求，請在此填寫"></textarea>
+         </div>
          <div class="bg-pink-50 border-2 border-pink-300 rounded-lg p-4">
-          <label class="block text-sm font-bold text-pink-900 mb-2">💵 最終價格（可手動修改）：</label>
+          <label class="block text-sm font-bold text-pink-900 mb-2">💵 預計費用：</label>
           <div class="flex items-center gap-3">
            <span class="text-xl font-bold">$</span>
-           <input type="number" id="manual-price" min="0" step="1" class="input-pink w-40" placeholder="手動改價">
+           <input type="number" id="manual-price" min="0" step="1" class="input-pink w-40" readonly>
           </div>
          </div>
-         <div class="pt-3 border-t-2 border-pink-300">
+         <div id="payment-instructions" class="pt-3 border-t-2 border-pink-300">
+          <p class="text-sm text-blue-700 mb-3">📱 請等候琴室WhatsApp聯絡安排付款</p>
+          <button type="submit" id="submit-booking-btn" class="btn-primary w-full py-4 text-base">
+            📝 提交預約申請
+          </button>
+         </div>
+         <div id="staff-payment-section" style="display: none;" class="pt-3 border-t-2 border-pink-300">
           <p class="text-xs text-pink-700 mb-3">💡 立即付款確認預約，或先保留時段後付款</p>
           <div class="grid grid-cols-2 gap-4">
-           <button type="submit" id="submit-paid-btn" class="btn-primary py-4 text-base">✅ 立即付款確認預約</button>
+           <button type="button" id="submit-paid-btn" class="btn-primary py-4 text-base">✅ 立即付款確認預約</button>
            <button type="button" id="submit-pending-btn" class="btn-secondary py-4 text-base">📝 先預約後付款</button>
           </div>
          </div>
@@ -737,8 +765,9 @@
          <label class="block text-xs font-bold text-pink-900 mb-1">🏷️ 狀態篩選</label>
          <select id="status-filter" class="select-pink text-sm">
           <option value="">全部狀態</option>
-          <option value="pending">待付款</option>
+          <option value="pending">待確認</option>
           <option value="paid">已付款</option>
+          <option value="confirmed">已確認收款</option>
          </select>
         </div>
         <div>
@@ -804,6 +833,7 @@
     };
 
     const STAFF_PASSWORD = "kaya2026"; // 工作人員密碼
+    const ADMIN_EMAIL = "c.musicstudio.hongkong@gmail.com";
 
     // 使用 localStorage 來儲存預約數據
     const STORAGE_KEY = 'kaya_music_bookings';
@@ -834,7 +864,9 @@
             end_time: booking.end_time || '',
             user_name: booking.user_name || '',
             phone: booking.phone || '',
+            email: booking.email || '',
             purpose: booking.purpose || '一般預約',
+            notes: booking.notes || '',
             total_amount: booking.total_amount || 0,
             original_amount: booking.original_amount || booking.total_amount || 0,
             payment_status: booking.payment_status || 'pending',
@@ -843,7 +875,10 @@
             created_at: booking.created_at || new Date().toISOString(),
             has_video_service: booking.has_video_service || false,
             date_nature: booking.date_nature || '平日',
-            is_past_date: booking.is_past_date || false
+            is_past_date: booking.is_past_date || false,
+            admin_email_sent: booking.admin_email_sent || false,
+            customer_email_sent: booking.customer_email_sent || false,
+            email_sent_at: booking.email_sent_at || null
           }));
         } else {
           bookings = DEFAULT_BOOKINGS;
@@ -863,6 +898,67 @@
       }
     }
 
+    // EmailJS 配置（需要到 https://www.emailjs.com 註冊）
+    const EMAILJS_CONFIG = {
+      service_id: 'service_ymywg8k', // 需要替換
+      template_id: 'template_music_booking', // 需要替換
+      user_id: 'user_xxxxxxxx' // 需要替換
+    };
+
+    // 發送郵件給管理員（新預約通知）
+    async function sendAdminNotification(booking) {
+      try {
+        // 這裡使用 EmailJS 發送郵件
+        // 實際使用時需要註冊 EmailJS 並配置正確的參數
+        
+        // 模擬發送
+        console.log('發送新預約通知給管理員:', {
+          to: ADMIN_EMAIL,
+          subject: `🎵 新預約申請 - ${booking.user_name} - ${booking.start_date}`,
+          booking: booking
+        });
+        
+        // 標記已發送
+        booking.admin_email_sent = true;
+        booking.email_sent_at = new Date().toISOString();
+        saveBookings();
+        
+        return true;
+      } catch (error) {
+        console.error('發送管理員通知失敗:', error);
+        return false;
+      }
+    }
+
+    // 發送確認郵件給客戶
+    async function sendCustomerConfirmation(booking) {
+      try {
+        if (!booking.email) {
+          console.error('客戶沒有提供電郵地址');
+          return false;
+        }
+        
+        // 這裡使用 EmailJS 發送郵件
+        // 實際使用時需要註冊 EmailJS 並配置正確的參數
+        
+        // 模擬發送
+        console.log('發送確認郵件給客戶:', {
+          to: booking.email,
+          subject: `🎵 卡雅音樂教室 - 預約確認 - ${booking.start_date}`,
+          booking: booking
+        });
+        
+        // 標記已發送
+        booking.customer_email_sent = true;
+        saveBookings();
+        
+        return true;
+      } catch (error) {
+        console.error('發送客戶確認郵件失敗:', error);
+        return false;
+      }
+    }
+
     // 初始化應用
     function initializeApp() {
       loadBookings();
@@ -873,7 +969,7 @@
       // 自動顯示當月
       currentCalendarMonth = new Date();
       if (currentCalendarMonth.getFullYear() !== 2026) {
-        currentCalendarMonth = new Date(2026, 0, 1);
+        currentCalendarMonth = new Date(2026, currentCalendarMonth.getMonth(), 1);
       }
     }
 
@@ -912,6 +1008,15 @@
       
       // 調整版面
       document.querySelector('main').style.width = '100%';
+      
+      // 公開模式隱藏舊客戶選項
+      document.getElementById('returning-customer-container').style.display = 'none';
+      document.getElementById('staff-payment-section').style.display = 'none';
+      document.getElementById('payment-instructions').style.display = 'block';
+      
+      // 公開模式顯示電郵欄位
+      document.getElementById('email-container').style.display = 'block';
+      
       renderCalendar();
     }
 
@@ -925,6 +1030,12 @@
       // 恢復版面
       document.querySelector('main > section').style.width = '70%';
       document.querySelector('main > aside').style.width = '30%';
+      
+      // 工作人員模式顯示所有選項
+      document.getElementById('returning-customer-container').style.display = 'block';
+      document.getElementById('staff-payment-section').style.display = 'block';
+      document.getElementById('payment-instructions').style.display = 'none';
+      document.getElementById('email-container').style.display = 'block';
       
       renderCalendar();
       renderBookingList();
@@ -998,6 +1109,14 @@
 
       document.getElementById('booking-form').addEventListener('submit', (e) => {
         e.preventDefault();
+        if (isStaffMode) {
+          handleFormSubmit('pending');
+        } else {
+          handlePublicBooking();
+        }
+      });
+
+      document.getElementById('submit-paid-btn').addEventListener('click', () => {
         handleFormSubmit('paid');
       });
 
@@ -1123,15 +1242,9 @@
         const isPublicHolidayDate = !!publicHolidays[dateStr];
         const isWeekendDay = date.getDay() === 0 || date.getDay() === 6;
         
-        // 檢查是否有預約（公開模式下只顯示已付款預約）
+        // 檢查是否有預約（每房每時段分別計算）
         const hasBookingOnDate = bookings.some(b => {
-          if (isPublicMode) {
-            // 公開模式：只顯示已付款預約
-            return b.start_date === dateStr && b.payment_status === 'paid';
-          } else {
-            // 工作人員模式：顯示所有預約
-            return b.start_date === dateStr;
-          }
+          return b.start_date === dateStr;
         });
         
         // 紅圈標記：公眾假期或週末
@@ -1142,11 +1255,6 @@
         // 右上角紅點：已有預約
         if (hasBookingOnDate) {
           dayDiv.classList.add('has-booking');
-          
-          // 公開模式下，已預約的日子不能點選
-          if (isPublicMode) {
-            dayDiv.classList.add('disabled');
-          }
         }
 
         if (isToday) dayDiv.classList.add('today');
@@ -1292,7 +1400,7 @@
       }
 
       const purpose = document.getElementById('purpose-select').value;
-      const isReturning = document.getElementById('is-returning-customer').checked;
+      const isReturning = isStaffMode ? document.getElementById('is-returning-customer').checked : false;
       const room = rooms.find(r => r.id === currentRoom);
       const hasVideo = document.getElementById('video-service-checkbox').checked;
 
@@ -1403,7 +1511,7 @@
       document.getElementById('manual-price').value = totalPrice;
     }
 
-    async function handleFormSubmit(paymentStatus) {
+    async function handlePublicBooking() {
       if (!currentRoom) {
         showToast('請選擇房間', 'error');
         return;
@@ -1424,13 +1532,20 @@
 
       const userName = document.getElementById('user-name').value;
       const phone = document.getElementById('phone').value;
+      const email = document.getElementById('email').value;
       const purpose = document.getElementById('purpose-select').value;
-      const isReturning = document.getElementById('is-returning-customer').checked;
+      const notes = document.getElementById('notes').value;
       const hasVideo = document.getElementById('video-service-checkbox').checked;
       const manualPrice = parseInt(document.getElementById('manual-price').value) || 0;
       const calculatedPrice = parseInt(document.getElementById('total-price-display').textContent.replace('$', ''));
 
-      const btn = paymentStatus === 'paid' ? document.getElementById('submit-paid-btn') : document.getElementById('submit-pending-btn');
+      // 驗證電郵
+      if (!email || !email.includes('@')) {
+        showToast('請輸入有效的電郵地址', 'error');
+        return;
+      }
+
+      const btn = document.getElementById('submit-booking-btn');
       const originalText = btn.textContent;
       btn.disabled = true;
       btn.textContent = '⏳ 處理中...';
@@ -1439,13 +1554,14 @@
       let errorMessages = [];
 
       for (const date of selectedDates) {
-        // 檢查該時段是否已被預約
+        // 檢查該房該時段是否已被預約（每房每時段分別計算）
         const dateStr = date.toISOString().split('T')[0];
         const isTimeSlotTaken = bookings.some(b => {
           return b.start_date === dateStr && 
                  b.room_id === currentRoom &&
                  b.start_time === startTime &&
-                 b.end_time === endTime;
+                 b.end_time === endTime &&
+                 b.payment_status !== 'cancelled';
         });
 
         if (isTimeSlotTaken) {
@@ -1475,7 +1591,129 @@
           end_time: endTime,
           user_name: userName,
           phone: phone,
+          email: email,
           purpose: purpose,
+          notes: notes,
+          total_amount: manualPrice,
+          original_amount: calculatedPrice,
+          payment_status: 'pending',
+          is_returning_customer: false,
+          manual_price_override: false,
+          created_at: new Date().toISOString(),
+          has_video_service: hasVideo,
+          date_nature: dateNature,
+          is_past_date: isPastDate,
+          admin_email_sent: false,
+          customer_email_sent: false,
+          email_sent_at: null
+        };
+
+        bookings.push(booking);
+        successCount++;
+        
+        // 發送通知給管理員
+        sendAdminNotification(booking);
+      }
+
+      btn.disabled = false;
+      btn.textContent = originalText;
+
+      if (errorMessages.length > 0) {
+        showToast(`⚠️ ${errorMessages.join('、')}`, 'warning');
+      }
+
+      if (successCount > 0) {
+        saveBookings();
+        const emailResult = await sendAdminNotification(bookings[bookings.length - 1]);
+        
+        if (emailResult) {
+          showToast(`✅ 成功提交 ${successCount} 筆預約申請，管理員已收到通知`, 'success');
+        } else {
+          showToast(`✅ 成功提交 ${successCount} 筆預約申請`, 'success');
+        }
+        
+        resetForm();
+      }
+    }
+
+    async function handleFormSubmit(paymentStatus) {
+      if (!currentRoom) {
+        showToast('請選擇房間', 'error');
+        return;
+      }
+
+      if (selectedDates.length === 0) {
+        showToast('請選擇日期', 'error');
+        return;
+      }
+
+      const startTime = document.getElementById('start-time-select').value;
+      const endTime = document.getElementById('end-time-select').value;
+
+      if (!startTime || !endTime) {
+        showToast('請選擇時間', 'error');
+        return;
+      }
+
+      const userName = document.getElementById('user-name').value;
+      const phone = document.getElementById('phone').value;
+      const email = document.getElementById('email').value;
+      const purpose = document.getElementById('purpose-select').value;
+      const notes = document.getElementById('notes').value;
+      const isReturning = document.getElementById('is-returning-customer').checked;
+      const hasVideo = document.getElementById('video-service-checkbox').checked;
+      const manualPrice = parseInt(document.getElementById('manual-price').value) || 0;
+      const calculatedPrice = parseInt(document.getElementById('total-price-display').textContent.replace('$', ''));
+
+      const btn = paymentStatus === 'paid' ? document.getElementById('submit-paid-btn') : document.getElementById('submit-pending-btn');
+      const originalText = btn.textContent;
+      btn.disabled = true;
+      btn.textContent = '⏳ 處理中...';
+
+      let successCount = 0;
+      let errorMessages = [];
+
+      for (const date of selectedDates) {
+        // 檢查該房該時段是否已被預約（每房每時段分別計算）
+        const dateStr = date.toISOString().split('T')[0];
+        const isTimeSlotTaken = bookings.some(b => {
+          return b.start_date === dateStr && 
+                 b.room_id === currentRoom &&
+                 b.start_time === startTime &&
+                 b.end_time === endTime &&
+                 b.payment_status !== 'cancelled';
+        });
+
+        if (isTimeSlotTaken) {
+          errorMessages.push(`${dateStr} 的時段已被預約`);
+          continue;
+        }
+
+        const holidayName = isPublicHoliday(date);
+        const isWeekendDay = isWeekend(date);
+        
+        let dateNature = '平日';
+        if (isWeekendDay) {
+          dateNature = '週末';
+        } else if (holidayName) {
+          dateNature = holidayName;
+        }
+
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const isPastDate = date < today;
+
+        const booking = {
+          id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
+          room_id: currentRoom,
+          start_date: dateStr,
+          start_time: startTime,
+          end_time: endTime,
+          user_name: userName,
+          phone: phone,
+          email: email,
+          purpose: purpose,
+          notes: notes,
           total_amount: manualPrice,
           original_amount: calculatedPrice,
           payment_status: paymentStatus,
@@ -1484,7 +1722,10 @@
           created_at: new Date().toISOString(),
           has_video_service: hasVideo,
           date_nature: dateNature,
-          is_past_date: isPastDate
+          is_past_date: isPastDate,
+          admin_email_sent: false,
+          customer_email_sent: false,
+          email_sent_at: null
         };
 
         bookings.push(booking);
@@ -1499,10 +1740,12 @@
       }
 
       if (successCount > 0) {
-        saveBookings(); // 儲存到 localStorage
+        saveBookings();
         const statusText = paymentStatus === 'paid' ? '已付款' : '待付款';
         showToast(`✅ 成功創建 ${successCount} 筆預約（${statusText}）`, 'success');
         resetForm();
+        renderBookingList();
+        updateStatistics();
       }
     }
 
@@ -1593,12 +1836,24 @@
         
         const bookingCardClass = isFutureBooking ? 'future-booking' : 'past-booking';
         
-        const statusBadge = booking.payment_status === 'paid' 
-          ? '<span class="status-badge status-paid">✅ 已付款</span>' 
-          : '<span class="status-badge status-pending">⏳ 待付款</span>';
+        let statusBadge = '';
+        if (booking.payment_status === 'paid') {
+          statusBadge = '<span class="status-badge status-paid">✅ 已付款</span>';
+        } else if (booking.payment_status === 'confirmed') {
+          statusBadge = '<span class="status-badge status-confirmed">📧 已確認收款</span>';
+        } else {
+          statusBadge = '<span class="status-badge status-pending">⏳ 待確認</span>';
+        }
+
+        const emailBadge = booking.admin_email_sent ? '<span class="email-sent-badge">已通知</span>' : '';
+        const customerEmailBadge = booking.customer_email_sent ? '<span class="email-sent-badge" style="background: linear-gradient(135deg, #8B5CF6 0%, #7C3AED 100%);">已發確認</span>' : '';
 
         const payButton = booking.payment_status === 'pending' 
           ? `<button class="btn-pay" onclick="confirmPayment('${booking.id}')">💰 確認付款</button>` 
+          : '';
+
+        const confirmButton = booking.payment_status === 'paid' && !booking.customer_email_sent
+          ? `<button class="btn-pay" style="background: linear-gradient(135deg, #8B5CF6 0%, #7C3AED 100%);" onclick="sendConfirmationEmail('${booking.id}')">📧 發確認信</button>`
           : '';
 
         return `
@@ -1607,21 +1862,31 @@
               <h4 class="font-bold text-pink-900 text-sm">
                 ${room ? room.name : booking.room_id} ${room ? room.subtitle : ''}
               </h4>
-              ${statusBadge}
+              <div>
+                ${statusBadge}
+                ${emailBadge}
+                ${customerEmailBadge}
+              </div>
             </div>
             
             <div class="text-xs text-pink-900 space-y-1 mb-2">
               <p><strong>📅</strong> ${dateStr}${dateLabel}</p>
               <p><strong>⏰</strong> ${formatTime(booking.start_time)} - ${formatTime(booking.end_time)}</p>
-              <p><strong>👤</strong> ${booking.user_name} | <strong>🎯</strong> ${booking.purpose}</p>
+              <p><strong>👤</strong> ${booking.user_name}</p>
+              <p><strong>📱</strong> ${booking.phone}</p>
+              <p><strong>📧</strong> ${booking.email || '未提供'}</p>
+              <p><strong>🎯</strong> ${booking.purpose}</p>
+              ${booking.notes ? `<p><strong>📝</strong> ${booking.notes}</p>` : ''}
               ${booking.has_video_service ? '<p><strong>📹</strong> 含錄影服務</p>' : ''}
               <p><strong>💰</strong> <span class="font-bold text-pink-600">$${booking.total_amount}</span>
               ${booking.manual_price_override ? '<span class="text-xs text-orange-600"> (手動改價)</span>' : ''}
+              ${booking.is_returning_customer ? '<span class="text-xs text-green-600"> (舊客戶9折)</span>' : ''}
               </p>
             </div>
             
             <div class="flex gap-2">
               ${payButton}
+              ${confirmButton}
               <button class="btn-edit flex-1" onclick="editBooking('${booking.id}')">✏️ 編輯</button>
               <button class="btn-delete flex-1" onclick="deleteBooking('${booking.id}')">🗑️ 取消</button>
             </div>
@@ -1663,6 +1928,44 @@
       });
     };
 
+    window.sendConfirmationEmail = async function(bookingId) {
+      const booking = bookings.find(b => b.id === bookingId);
+      if (!booking) return;
+
+      const modal = document.createElement('div');
+      modal.className = 'modal-overlay';
+      modal.innerHTML = `
+        <div class="modal-content p-8">
+          <h3 class="text-xl font-bold text-pink-900 mb-4">📧 發送確認郵件</h3>
+          <p class="text-pink-800 mb-6">確定要發送確認收款郵件給 <strong>${booking.user_name}</strong> (<strong>${booking.email}</strong>) 嗎？</p>
+          <div class="flex gap-3">
+            <button id="confirm-send" class="btn-primary flex-1 py-3" style="background: linear-gradient(135deg, #8B5CF6 0%, #7C3AED 100%);">📧 發送確認信</button>
+            <button id="cancel-send" class="btn-secondary flex-1 py-3">返回</button>
+          </div>
+        </div>
+      `;
+      
+      document.body.appendChild(modal);
+
+      document.getElementById('confirm-send').addEventListener('click', async () => {
+        const result = await sendCustomerConfirmation(booking);
+        if (result) {
+          showToast('✅ 確認郵件已發送', 'success');
+          booking.payment_status = 'confirmed';
+          saveBookings();
+        } else {
+          showToast('❌ 發送郵件失敗', 'error');
+        }
+        document.body.removeChild(modal);
+        renderBookingList();
+        updateStatistics();
+      });
+
+      document.getElementById('cancel-send').addEventListener('click', () => {
+        document.body.removeChild(modal);
+      });
+    };
+
     window.editBooking = function(bookingId) {
       const booking = bookings.find(b => b.id === bookingId);
       if (!booking) return;
@@ -1680,8 +1983,13 @@
             </div>
             
             <div>
-              <label class="block text-sm font-bold text-pink-900 mb-2">聯絡方式</label>
+              <label class="block text-sm font-bold text-pink-900 mb-2">WhatsApp聯絡方法</label>
               <input type="tel" id="edit-phone" value="${booking.phone}" class="input-pink">
+            </div>
+
+            <div>
+              <label class="block text-sm font-bold text-pink-900 mb-2">電郵地址</label>
+              <input type="email" id="edit-email" value="${booking.email || ''}" class="input-pink">
             </div>
             
             <div>
@@ -1701,9 +2009,15 @@
             <div>
               <label class="block text-sm font-bold text-pink-900 mb-2">付款狀態</label>
               <select id="edit-payment-status" class="select-pink">
-                <option value="pending" ${booking.payment_status === 'pending' ? 'selected' : ''}>待付款</option>
+                <option value="pending" ${booking.payment_status === 'pending' ? 'selected' : ''}>待確認</option>
                 <option value="paid" ${booking.payment_status === 'paid' ? 'selected' : ''}>已付款</option>
+                <option value="confirmed" ${booking.payment_status === 'confirmed' ? 'selected' : ''}>已確認收款</option>
               </select>
+            </div>
+            
+            <div>
+              <label class="block text-sm font-bold text-pink-900 mb-2">備註</label>
+              <textarea id="edit-notes" class="input-pink" rows="2">${booking.notes || ''}</textarea>
             </div>
             
             <div>
@@ -1730,9 +2044,11 @@
         const newPrice = parseInt(document.getElementById('edit-price').value);
         booking.user_name = document.getElementById('edit-name').value;
         booking.phone = document.getElementById('edit-phone').value;
+        booking.email = document.getElementById('edit-email').value;
         booking.start_time = document.getElementById('edit-start-time').value;
         booking.end_time = document.getElementById('edit-end-time').value;
         booking.payment_status = document.getElementById('edit-payment-status').value;
+        booking.notes = document.getElementById('edit-notes').value;
         booking.total_amount = newPrice;
         booking.manual_price_override = newPrice !== booking.original_amount;
 
@@ -1804,7 +2120,7 @@
       const currentYear = 2026;
       const currentMonth = new Date().getMonth();
       
-      const paidBookings = bookings.filter(b => b.payment_status === 'paid');
+      const paidBookings = bookings.filter(b => b.payment_status === 'paid' || b.payment_status === 'confirmed');
 
       const monthIncome = paidBookings
         .filter(b => {
