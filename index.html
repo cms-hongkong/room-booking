@@ -3,148 +3,822 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>房間預約管理系統 - 卡雅音樂教室</title>
+  <title>房間預約管理系統</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
-    /* ... 這裡保留你原本所有的 CSS 樣式 (省略以節省空間，內容與你提供的一致) ... */
-    body { box-sizing: border-box; font-family: 'Microsoft JhengHei', 'Noto Sans TC', 'PingFang TC', sans-serif; }
-    .calendar-day { width: 38px; height: 38px; border-radius: 6px; cursor: pointer; transition: all 0.3s ease; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 600; background: white; border: 2px solid #F9A8D4; color: #1a1a1a; position: relative; }
-    .calendar-day.has-booking::after { content: ''; position: absolute; width: 6px; height: 6px; background: #DC2626; border-radius: 50%; top: 3px; right: 3px; z-index: 3; box-shadow: 0 0 3px rgba(220, 38, 38, 0.6); }
-    .calendar-day.red-circle::before { content: ''; position: absolute; width: 32px; height: 32px; border: 2px solid #DC2626; border-radius: 50%; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 1; }
-    .calendar-day span { position: relative; z-index: 2; }
-    .calendar-day:hover:not(.disabled) { background: #FCE7F3; transform: scale(1.15); z-index: 10; border-color: #EC4899; }
-    .calendar-day.selected { background: linear-gradient(135deg, #EC4899 0%, #DB2777 100%); color: white; box-shadow: 0 6px 16px rgba(236, 72, 153, 0.5); transform: scale(1.1); z-index: 5; border-color: #BE185D; }
-    .calendar-day.today { border: 3px solid #F59E0B; font-weight: 700; box-shadow: 0 0 0 2px #FEF3C7; }
-    .calendar-day.disabled { color: #D1D5DB; cursor: not-allowed; opacity: 0.35; border-color: #E5E7EB; }
-    .room-card { border: 2px solid #F9A8D4; border-radius: 8px; padding: 10px 20px; cursor: pointer; transition: all 0.3s ease; background: white; text-align: center; font-size: 14px; }
-    .room-card.active { background: linear-gradient(135deg, #EC4899 0%, #DB2777 100%); color: white; border-color: #BE185D; }
-    .btn-primary { background: linear-gradient(135deg, #10B981 0%, #059669 100%); color: white; padding: 12px 24px; border-radius: 10px; font-weight: 700; cursor: pointer; }
-    .btn-secondary { background: linear-gradient(135deg, #3B82F6 0%, #2563EB 100%); color: white; padding: 12px 24px; border-radius: 10px; font-weight: 700; cursor: pointer; }
-    .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background-color: rgba(190, 24, 93, 0.4); z-index: 1000; display: flex; align-items: center; justify-content: center; backdrop-filter: blur(8px); }
-    .modal-content { background: white; border-radius: 20px; max-width: 700px; width: 90%; max-height: 90%; overflow-y: auto; box-shadow: 0 24px 60px rgba(190, 24, 93, 0.3); border: 3px solid #F9A8D4; }
-    .input-pink { border: 2px solid #F9A8D4; border-radius: 8px; padding: 10px 14px; width: 100%; }
-    .select-pink { border: 2px solid #F9A8D4; border-radius: 8px; padding: 10px 14px; width: 100%; cursor: pointer; }
-    .price-display { background: linear-gradient(135deg, #FEF3C7 0%, #FDE68A 100%); border: 3px solid #F59E0B; border-radius: 12px; padding: 20px; }
-    .login-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: linear-gradient(135deg, #FDF2F8 0%, #FCE7F3 100%); z-index: 2000; display: flex; align-items: center; justify-content: center; }
-    .login-container { background: white; border-radius: 20px; padding: 40px; box-shadow: 0 24px 60px rgba(190, 24, 93, 0.3); border: 3px solid #F9A8D4; max-width: 400px; width: 90%; }
+    body {
+      box-sizing: border-box;
+      font-family: 'Microsoft JhengHei', 'Noto Sans TC', 'PingFang TC', sans-serif;
+    }
+    
+    .calendar-day {
+      width: 38px;
+      height: 38px;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 13px;
+      font-weight: 600;
+      background: white;
+      border: 2px solid #F9A8D4;
+      color: #1a1a1a;
+      position: relative;
+    }
+    
+    .calendar-day.has-booking::after {
+      content: '';
+      position: absolute;
+      width: 6px;
+      height: 6px;
+      background: #DC2626;
+      border-radius: 50%;
+      top: 3px;
+      right: 3px;
+      z-index: 3;
+      box-shadow: 0 0 3px rgba(220, 38, 38, 0.6);
+    }
+    
+    .calendar-day.red-circle::before {
+      content: '';
+      position: absolute;
+      width: 32px;
+      height: 32px;
+      border: 2px solid #DC2626;
+      border-radius: 50%;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      z-index: 1;
+    }
+    
+    .calendar-day span {
+      position: relative;
+      z-index: 2;
+    }
+    
+    .calendar-day:hover:not(.disabled) {
+      background: #FCE7F3;
+      transform: scale(1.15);
+      z-index: 10;
+      border-color: #EC4899;
+    }
+    
+    .calendar-day.selected {
+      background: linear-gradient(135deg, #EC4899 0%, #DB2777 100%);
+      color: white;
+      box-shadow: 0 6px 16px rgba(236, 72, 153, 0.5);
+      transform: scale(1.1);
+      z-index: 5;
+      border-color: #BE185D;
+    }
+    
+    .calendar-day.today {
+      border: 3px solid #F59E0B;
+      font-weight: 700;
+      box-shadow: 0 0 0 2px #FEF3C7;
+    }
+    
+    .calendar-day.disabled {
+      color: #D1D5DB;
+      cursor: not-allowed;
+      opacity: 0.35;
+      border-color: #E5E7EB;
+    }
+
+    .calendar-day.public-holiday::before {
+      content: '';
+      position: absolute;
+      width: 32px;
+      height: 32px;
+      border: 2px solid #DC2626;
+      border-radius: 50%;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      z-index: 1;
+    }
+
+    .room-card {
+      border: 2px solid #F9A8D4;
+      border-radius: 8px;
+      padding: 10px 20px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      background: white;
+      text-align: center;
+      font-size: 14px;
+    }
+
+    .room-card:hover {
+      background: #FCE7F3;
+      border-color: #EC4899;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(236, 72, 153, 0.3);
+    }
+
+    .room-card.active {
+      background: linear-gradient(135deg, #EC4899 0%, #DB2777 100%);
+      color: white;
+      border-color: #BE185D;
+      box-shadow: 0 4px 12px rgba(236, 72, 153, 0.4);
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, #10B981 0%, #059669 100%);
+      color: white;
+      padding: 12px 24px;
+      border-radius: 10px;
+      font-weight: 700;
+      transition: all 0.3s ease;
+      border: none;
+      cursor: pointer;
+      box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+    }
+    
+    .btn-primary:hover:not(:disabled) {
+      background: linear-gradient(135deg, #059669 0%, #047857 100%);
+      transform: translateY(-2px);
+      box-shadow: 0 6px 16px rgba(16, 185, 129, 0.4);
+    }
+
+    .btn-primary:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .btn-secondary {
+      background: linear-gradient(135deg, #3B82F6 0%, #2563EB 100%);
+      color: white;
+      padding: 12px 24px;
+      border-radius: 10px;
+      font-weight: 700;
+      transition: all 0.3s ease;
+      border: none;
+      cursor: pointer;
+      box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+    }
+    
+    .btn-secondary:hover:not(:disabled) {
+      background: linear-gradient(135deg, #2563EB 0%, #1D4ED8 100%);
+      transform: translateY(-2px);
+      box-shadow: 0 6px 16px rgba(59, 130, 246, 0.4);
+    }
+
+    .btn-secondary:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      transform: none;
+    }
+    
+    .btn-edit {
+      background: linear-gradient(135deg, #F59E0B 0%, #D97706 100%);
+      color: white;
+      padding: 6px 12px;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 600;
+      transition: all 0.3s ease;
+      border: none;
+      cursor: pointer;
+    }
+    
+    .btn-edit:hover {
+      transform: scale(1.05);
+    }
+    
+    .btn-delete {
+      background: linear-gradient(135deg, #EF4444 0%, #DC2626 100%);
+      color: white;
+      padding: 6px 12px;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 600;
+      transition: all 0.3s ease;
+      border: none;
+      cursor: pointer;
+    }
+    
+    .btn-delete:hover {
+      transform: scale(1.05);
+    }
+
+    .btn-pay {
+      background: linear-gradient(135deg, #10B981 0%, #059669 100%);
+      color: white;
+      padding: 6px 12px;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 600;
+      transition: all 0.3s ease;
+      border: none;
+      cursor: pointer;
+    }
+    
+    .btn-pay:hover {
+      transform: scale(1.05);
+    }
+    
+    .modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-color: rgba(190, 24, 93, 0.4);
+      z-index: 1000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      backdrop-filter: blur(8px);
+    }
+    
+    .modal-content {
+      background: white;
+      border-radius: 20px;
+      max-width: 700px;
+      width: 90%;
+      max-height: 90%;
+      overflow-y: auto;
+      box-shadow: 0 24px 60px rgba(190, 24, 93, 0.3);
+      border: 3px solid #F9A8D4;
+    }
+    
+    .booking-card {
+      transition: all 0.3s ease;
+      border: 2px solid #F9A8D4;
+      background: white;
+      border-radius: 10px;
+      padding: 12px;
+    }
+    
+    .booking-card:hover {
+      background: #FFF7FC;
+      transform: translateX(4px);
+      box-shadow: 0 6px 20px rgba(236, 72, 153, 0.2);
+      border-color: #EC4899;
+    }
+    
+    .input-pink {
+      border: 2px solid #F9A8D4;
+      border-radius: 8px;
+      padding: 10px 14px;
+      transition: all 0.3s ease;
+      font-weight: 500;
+      width: 100%;
+    }
+    
+    .input-pink:focus {
+      outline: none;
+      border-color: #EC4899;
+      box-shadow: 0 0 0 4px rgba(236, 72, 153, 0.1);
+    }
+    
+    .select-pink {
+      border: 2px solid #F9A8D4;
+      border-radius: 8px;
+      padding: 10px 14px;
+      transition: all 0.3s ease;
+      font-weight: 600;
+      background: white;
+      cursor: pointer;
+      width: 100%;
+    }
+    
+    .select-pink:focus {
+      outline: none;
+      border-color: #EC4899;
+      box-shadow: 0 0 0 4px rgba(236, 72, 153, 0.1);
+    }
+    
+    .scrollbar-pink::-webkit-scrollbar {
+      width: 8px;
+    }
+    
+    .scrollbar-pink::-webkit-scrollbar-track {
+      background: #FDF2F8;
+      border-radius: 10px;
+    }
+    
+    .scrollbar-pink::-webkit-scrollbar-thumb {
+      background: linear-gradient(135deg, #EC4899 0%, #DB2777 100%);
+      border-radius: 10px;
+    }
+
+    .stat-card {
+      background: rgba(255, 255, 255, 0.25);
+      backdrop-filter: blur(10px);
+      border-radius: 10px;
+      padding: 12px 20px;
+      border: 2px solid rgba(255, 255, 255, 0.3);
+    }
+
+    .status-badge {
+      padding: 4px 10px;
+      border-radius: 6px;
+      font-size: 11px;
+      font-weight: 700;
+      display: inline-block;
+    }
+
+    .status-pending {
+      background: linear-gradient(135deg, #F59E0B 0%, #D97706 100%);
+      color: white;
+    }
+
+    .status-paid {
+      background: linear-gradient(135deg, #10B981 0%, #059669 100%);
+      color: white;
+    }
+
+    .status-confirmed {
+      background: linear-gradient(135deg, #3B82F6 0%, #2563EB 100%);
+      color: white;
+    }
+
+    .price-display {
+      background: linear-gradient(135deg, #FEF3C7 0%, #FDE68A 100%);
+      border: 3px solid #F59E0B;
+      border-radius: 12px;
+      padding: 20px;
+    }
+
+    .date-nature-alert {
+      border-radius: 12px;
+      padding: 18px;
+      border: 3px solid;
+      margin-bottom: 20px;
+    }
+
+    .date-nature-alert.holiday-type {
+      background: linear-gradient(135deg, #FEE2E2 0%, #FECACA 100%);
+      border-color: #F87171;
+    }
+
+    .date-nature-alert.weekday-type {
+      background: linear-gradient(135deg, #DCFCE7 0%, #BBF7D0 100%);
+      border-color: #4ADE80;
+    }
+    
+    .date-nature-alert.public-holiday-type {
+      background: linear-gradient(135deg, #E0E7FF 0%, #C7D2FE 100%);
+      border-color: #818CF8;
+    }
+
+    .calculation-card {
+      border: 2px solid;
+      border-radius: 10px;
+      padding: 16px;
+      margin-bottom: 12px;
+    }
+
+    .calculation-card.holiday-calc {
+      background: #FEF2F2;
+      border-color: #FCA5A5;
+    }
+
+    .calculation-card.weekday-calc {
+      background: #F0FDF4;
+      border-color: #86EFAC;
+    }
+    
+    .legend-box {
+      background: linear-gradient(135deg, #FFF7ED 0%, #FFEDD5 100%);
+      border: 3px solid #FB923C;
+      border-radius: 12px;
+      padding: 16px;
+      margin-top: 16px;
+    }
+
+    .login-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: linear-gradient(135deg, #FDF2F8 0%, #FCE7F3 100%);
+      z-index: 2000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .login-container {
+      background: white;
+      border-radius: 20px;
+      padding: 40px;
+      box-shadow: 0 24px 60px rgba(190, 24, 93, 0.3);
+      border: 3px solid #F9A8D4;
+      max-width: 400px;
+      width: 90%;
+    }
+
+    .public-view-badge {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      background: linear-gradient(135deg, #3B82F6 0%, #2563EB 100%);
+      color: white;
+      padding: 6px 12px;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    .future-booking {
+      border-color: #10B981 !important;
+      background: linear-gradient(135deg, #F0FDF4 0%, #DCFCE7 100%) !important;
+    }
+
+    .past-booking {
+      opacity: 0.7;
+      border-color: #9CA3AF !important;
+      background: linear-gradient(135deg, #F3F4F6 0%, #E5E7EB 100%) !important;
+    }
+    
+    .time-conflict-warning {
+      background: linear-gradient(135deg, #FEF3C7 0%, #FDE68A 100%);
+      border: 2px solid #F59E0B;
+      border-radius: 8px;
+      padding: 12px;
+      margin: 10px 0;
+      display: none;
+    }
+    
+    .duration-warning {
+      background: linear-gradient(135deg, #FEE2E2 0%, #FECACA 100%);
+      border: 2px solid #F87171;
+      border-radius: 8px;
+      padding: 12px;
+      margin: 10px 0;
+      display: none;
+    }
+    
+    .holiday-badge {
+      position: absolute;
+      top: -2px;
+      left: -2px;
+      background: linear-gradient(135deg, #EF4444 0%, #DC2626 100%);
+      color: white;
+      font-size: 8px;
+      padding: 1px 4px;
+      border-radius: 4px;
+      font-weight: bold;
+      z-index: 4;
+    }
   </style>
 </head>
 <body class="h-full" style="background: linear-gradient(135deg, #FDF2F8 0%, #FCE7F3 100%);">
-
   <div id="login-overlay" class="login-overlay">
     <div class="login-container">
       <h2 class="text-2xl font-bold text-pink-900 mb-6 text-center">🎵 卡雅音樂教室</h2>
+      <p class="text-pink-700 mb-6 text-center">請選擇進入模式</p>
       <div class="space-y-4">
-        <button id="public-access-btn" class="btn-secondary w-full py-4 text-lg">🌐 公開預約系統</button>
+        <button id="public-access-btn" class="btn-secondary w-full py-4 text-lg">
+          🌐 公開預約系統
+        </button>
         <div class="text-center text-gray-500 text-sm">或</div>
         <div>
-          <label class="block text-sm font-bold text-pink-900 mb-2">🔑 工作人員登入</label>
+          <label class="block text-sm font-bold text-pink-900 mb-2">🔑 工作人員登入密碼</label>
           <input type="password" id="staff-password" class="input-pink mb-4" placeholder="輸入管理密碼">
-          <button id="staff-login-btn" class="btn-primary w-full py-4 text-lg">👨‍💼 登入</button>
+          <button id="staff-login-btn" class="btn-primary w-full py-4 text-lg">
+            👨‍💼 工作人員登入
+          </button>
         </div>
+        <p class="text-xs text-gray-500 text-center mt-4">
+          公開預約系統：只能查看可預約時段並提交預約<br>
+          工作人員系統：可以管理所有預約記錄
+        </p>
       </div>
     </div>
   </div>
 
   <div id="app-content" class="h-full flex flex-col overflow-hidden" style="display: none;">
-    <header style="background: linear-gradient(135deg, #EC4899 0%, #DB2777 100%); border-bottom: 4px solid #BE185D;" class="px-8 py-4 shadow-xl">
-        <div class="flex justify-between items-center">
-         <div class="flex items-center gap-4">
-          <div class="text-5xl">🎵</div>
-          <div>
-           <h1 class="text-2xl font-bold text-white">卡雅音樂教室</h1>
-           <p class="text-pink-100 text-xs mt-1 font-semibold">📍 香港上水符興街43-45號1B室 | 📞 5400 1874</p>
+   <header style="background: linear-gradient(135deg, #EC4899 0%, #DB2777 100%); border-bottom: 4px solid #BE185D;" class="px-8 py-4 shadow-xl">
+    <div class="flex justify-between items-center">
+     <div class="flex items-center gap-4">
+      <div class="text-5xl">
+       🎵
+      </div>
+      <div>
+       <h1 id="company-name" class="text-2xl font-bold text-white" style="text-shadow: 2px 2px 4px rgba(0,0,0,0.2);">卡雅音樂教室</h1>
+       <p class="text-pink-100 text-xs mt-1 font-semibold">📍 <span id="address-info">香港上水符興街43-45號1B室</span> | 📞 <span id="contact-phone">5400 1874</span></p>
+      </div>
+     </div>
+     <div class="flex items-center gap-4">
+      <div id="public-mode-badge" class="public-view-badge" style="display: none;">
+        🌐 公開預約模式
+      </div>
+      
+      <div id="statistics-section">
+       <div class="flex gap-3">
+        <div class="stat-card text-center">
+         <p class="text-xs font-semibold text-white mb-1">📊 本月收入</p>
+         <p class="text-xl font-bold text-white" id="month-income">$0</p>
+        </div>
+        <div class="stat-card text-center">
+         <p class="text-xs font-semibold text-white mb-1">📈 本年累計</p>
+         <p class="text-xl font-bold text-white" id="year-income">$0</p>
+        </div>
+       </div>
+       <div class="text-white text-right">
+        <div class="text-3xl font-bold" id="current-year-display"></div>
+        <div class="text-xs font-semibold text-pink-100">
+         年度預約系統
+        </div>
+       </div>
+      </div>
+     </div>
+    </div>
+   </header>
+
+   <main class="flex-1 flex overflow-hidden">
+    <section class="flex flex-col overflow-hidden" style="width: 70%; background: linear-gradient(180deg, #FFFBFE 0%, #FFF7FC 100%);">
+     <div class="bg-white border-b-3 border-pink-300 px-6 py-4 shadow-md">
+      <h2 class="text-xl font-bold text-pink-900 flex items-center gap-2"><span class="text-2xl">🎵</span> <span>選擇房間與預約時間</span></h2>
+     </div>
+     <div class="flex-1 overflow-y-auto scrollbar-pink p-6">
+      <form id="booking-form" class="space-y-6">
+       <div class="bg-white rounded-xl border-3 border-pink-300 p-6 shadow-lg">
+        <h3 class="text-lg font-bold text-pink-900 mb-4">🎹 選擇房間</h3>
+        <div class="flex gap-2 mb-5 flex-wrap">
+         <div class="room-card" data-room="A">
+          <div class="font-bold">
+           A房
           </div>
          </div>
-         <div id="statistics-section" style="display:none;" class="flex gap-3">
-             <div class="bg-white/20 p-2 rounded text-white text-center">
-                 <p class="text-xs">月收入</p><p id="month-income" class="font-bold">$0</p>
-             </div>
+         <div class="room-card" data-room="B">
+          <div class="font-bold">
+           B房
+          </div>
+         </div>
+         <div class="room-card" data-room="C">
+          <div class="font-bold">
+           C房
+          </div>
+         </div>
+         <div class="room-card" data-room="D">
+          <div class="font-bold">
+           D房
+          </div>
+         </div>
+         <div class="room-card" data-room="E">
+          <div class="font-bold">
+           E房
+          </div>
+         </div>
+         <div class="room-card" data-room="1">
+          <div class="font-bold">
+           1房
+          </div>
+         </div>
+         <div class="room-card" data-room="2">
+          <div class="font-bold">
+           2房
+          </div>
          </div>
         </div>
-    </header>
+        <div id="room-info" style="display: none;" class="bg-gradient-to-r from-pink-50 to-pink-100 border-2 border-pink-400 rounded-xl p-5">
+         <h4 class="font-bold text-pink-900 text-lg mb-3" id="room-info-title"></h4>
+         <div class="space-y-2 text-sm text-pink-800 font-semibold">
+          <p><span class="inline-block w-24">📏 面積：</span><span id="room-info-area"></span></p>
+          <p><span class="inline-block w-24">👥 容納人數：</span><span id="room-info-capacity"></span></p>
+          <p><span class="inline-block w-24">🛠️ 設備：</span><span id="room-info-equipment"></span></p>
+          <p><span class="inline-block w-24">💰 收費：</span><span id="room-info-rates"></span></p>
+          <p id="room-info-video" style="display: none;"><span class="inline-block w-24">📹 錄影服務：</span><span id="room-info-video-rates"></span></p>
+         </div>
+        </div>
+       </div>
 
-    <main class="flex-1 flex overflow-hidden">
-        <section class="flex-1 overflow-y-auto p-6 scrollbar-pink">
-            <form id="booking-form" class="space-y-6">
-                <div class="bg-white rounded-xl border-2 border-pink-300 p-4">
-                    <h3 class="font-bold text-pink-900 mb-3">🎹 選擇房間</h3>
-                    <div class="flex gap-2 flex-wrap">
-                        <div class="room-card" data-room="A">房間A (三角)</div>
-                        <div class="room-card" data-room="B">房間B (直身)</div>
-                        <div class="room-card" data-room="C">房間C (數碼)</div>
-                        <div class="room-card" data-room="D">房間D (直身)</div>
-                        <div class="room-card" data-room="E">房間E (直身)</div>
-                        <div class="room-card" data-room="1">房間1 (活動)</div>
-                        <div class="room-card" data-room="2">房間2 (伴奏)</div>
-                    </div>
-                </div>
-                
-                <div class="bg-white rounded-xl border-2 border-pink-300 p-4">
-                    <div class="flex justify-between mb-2">
-                        <h3 class="font-bold text-pink-900">📅 選擇日期</h3>
-                        <div class="flex gap-1">
-                            <button type="button" id="prev-month-btn" class="text-xs border px-2 py-1 rounded">上月</button>
-                            <button type="button" id="next-month-btn" class="text-xs border px-2 py-1 rounded">下月</button>
-                        </div>
-                    </div>
-                    <div id="calendar-month-year" class="text-center font-bold text-pink-700 text-sm mb-2"></div>
-                    <div id="calendar-grid" class="grid grid-cols-7 gap-1"></div>
-                    <div id="selected-dates-display" class="mt-2 text-xs flex flex-wrap gap-1"></div>
-                </div>
+       <div class="bg-white rounded-xl border-3 border-pink-300 p-6 shadow-lg">
+        <div class="flex justify-between items-center mb-4">
+         <h3 class="text-lg font-bold text-pink-900">📅 選擇日期（可多選）</h3>
+         <div class="flex gap-2">
+          <button type="button" id="today-btn" class="bg-white text-pink-600 border-2 border-pink-400 px-3 py-1 rounded-lg text-sm font-bold hover:bg-pink-50">本月</button>
+          <button type="button" id="prev-month-btn" class="bg-white text-pink-600 border-2 border-pink-400 px-3 py-1 rounded-lg text-sm font-bold hover:bg-pink-50">上月</button>
+          <button type="button" id="next-month-btn" class="bg-white text-pink-600 border-2 border-pink-400 px-3 py-1 rounded-lg text-sm font-bold hover:bg-pink-50">下月</button>
+         </div>
+        </div>
+        <div class="bg-pink-50 rounded-lg p-3 border-2 border-pink-300">
+         <h4 id="calendar-month-year" class="text-center text-lg font-bold text-pink-900 mb-3"></h4>
+         <div class="grid grid-cols-7 gap-1.5 mb-2">
+          <div class="text-center text-xs font-bold text-red-600">日</div>
+          <div class="text-center text-xs font-bold text-pink-900">一</div>
+          <div class="text-center text-xs font-bold text-pink-900">二</div>
+          <div class="text-center text-xs font-bold text-pink-900">三</div>
+          <div class="text-center text-xs font-bold text-pink-900">四</div>
+          <div class="text-center text-xs font-bold text-pink-900">五</div>
+          <div class="text-center text-xs font-bold text-blue-600">六</div>
+         </div>
+         <div id="calendar-grid" class="grid grid-cols-7 gap-1.5"></div>
+        </div>
 
-                <div class="bg-white rounded-xl border-2 border-pink-300 p-4">
-                    <h3 class="font-bold text-pink-900 mb-3">⏰ 選擇時間</h3>
-                    <div class="grid grid-cols-2 gap-4">
-                        <select id="start-time-select" class="select-pink text-sm"></select>
-                        <select id="end-time-select" class="select-pink text-sm"></select>
-                    </div>
-                </div>
+        <div class="legend-box">
+         <p class="font-bold text-orange-900 text-sm mb-2">📅 日曆圖例：</p>
+         <div class="space-y-1 text-xs text-orange-800 font-semibold">
+          <p>🔴 <strong>紅圈日期</strong> = 星期六、日及公眾假期（假日收費）</p>
+          <p>✅ <strong>粉紅高亮</strong> = 您選擇的日期</p>
+          <p>🔴 <strong>右上紅點</strong> = 當日已有預約</p>
+          <p>🎯 <strong>紅底標籤</strong> = 公眾假期名稱</p>
+          <p>📅 <strong>週一至五（公眾假期外）</strong> = 按平日收費</p>
+         </div>
+        </div>
 
-                <div class="bg-white rounded-xl border-2 border-pink-300 p-4 space-y-4">
-                    <input type="text" id="user-name" placeholder="姓名" class="input-pink" required>
-                    <input type="tel" id="phone" placeholder="WhatsApp 電話" class="input-pink" required>
-                    <select id="purpose-select" class="select-pink">
-                        <option value="練習">練習</option>
-                        <option value="教學">教學</option>
-                    </select>
-                    <textarea id="notes" placeholder="備註" class="input-pink" rows="2"></textarea>
-                    
-                    <div class="price-display">
-                        <div class="flex justify-between font-bold text-pink-900">
-                            <span>總預計金額：</span>
-                            <span id="total-price-display" class="text-2xl text-pink-600">$0</span>
-                            <input type="hidden" id="manual-price" value="0">
-                        </div>
-                    </div>
+        <div class="mt-6 bg-white border-2 border-pink-300 rounded-lg p-3">
+         <p class="text-sm font-bold text-pink-900 mb-2">✅ 已選 <span id="selected-count" class="text-xl text-pink-600">0</span> 個日期</p>
+         <div id="selected-dates-display" class="flex flex-wrap gap-2">
+          <span class="text-xs text-gray-500">尚未選擇</span>
+         </div>
+        </div>
+       </div>
 
-                    <button type="submit" id="submit-booking-btn" class="btn-primary w-full py-4">📝 提交預約申請</button>
-                    <div id="staff-payment-section" style="display:none;" class="grid grid-cols-2 gap-2">
-                        <button type="button" id="submit-paid-btn" class="btn-primary">✅ 立即付款</button>
-                        <button type="button" id="submit-pending-btn" class="btn-secondary">⏳ 先預約</button>
-                    </div>
-                </div>
-            </form>
-        </section>
+       <div id="date-nature-alerts-container"></div>
+
+       <div class="bg-white rounded-xl border-3 border-pink-300 p-6 shadow-lg">
+        <h3 class="text-lg font-bold text-pink-900 mb-2">⏰ 選擇預約時段</h3>
+        <p class="text-xs text-pink-700 mb-4">💡 請選擇開始與結束時間（最少1小時，1小時後每半小時增加）</p>
         
-        <aside id="sidebar" style="display:none; width:300px;" class="border-l p-4 bg-white overflow-y-auto">
-            <h3 class="font-bold mb-4">📋 預約清單</h3>
-            <div id="booking-list" class="space-y-2"></div>
-        </aside>
-    </main>
+        <div id="time-conflict-warning" class="time-conflict-warning">
+          <p class="text-sm font-bold text-amber-900 mb-1">⚠️ 時段衝突警告</p>
+          <p class="text-xs text-amber-800" id="conflict-message"></p>
+        </div>
+        
+        <div id="duration-warning" class="duration-warning">
+          <p class="text-sm font-bold text-red-900 mb-1">⚠️ 預約時長限制</p>
+          <p class="text-xs text-red-800" id="duration-message">每次預約最少1小時，1小時後可每半小時增加</p>
+        </div>
+        
+        <div class="grid grid-cols-3 gap-4">
+         <div>
+          <label class="block text-sm font-bold text-pink-900 mb-2">開始時間：</label>
+          <select id="start-time-select" class="select-pink">
+           <option value="">請選擇</option>
+          </select>
+         </div>
+         <div>
+          <label class="block text-sm font-bold text-pink-900 mb-2">結束時間：</label>
+          <select id="end-time-select" class="select-pink">
+           <option value="">請選擇</option>
+          </select>
+         </div>
+         <div class="flex flex-col gap-2">
+          <div class="flex gap-2">
+           <button type="button" data-hours="1" class="duration-btn bg-white text-pink-600 border-2 border-pink-400 px-3 py-2 rounded-lg text-sm font-bold hover:bg-pink-50 flex-1">1小時</button>
+           <button type="button" data-hours="1.5" class="duration-btn bg-white text-pink-600 border-2 border-pink-400 px-3 py-2 rounded-lg text-sm font-bold hover:bg-pink-50 flex-1">1.5小時</button>
+           <button type="button" data-hours="2" class="duration-btn bg-white text-pink-600 border-2 border-pink-400 px-3 py-2 rounded-lg text-sm font-bold hover:bg-pink-50 flex-1">2小時</button>
+          </div>
+          <div class="flex gap-2">
+           <button type="button" data-hours="2.5" class="duration-btn bg-white text-pink-600 border-2 border-pink-400 px-3 py-2 rounded-lg text-sm font-bold hover:bg-pink-50 flex-1">2.5小時</button>
+           <button type="button" data-hours="3" class="duration-btn bg-white text-pink-600 border-2 border-pink-400 px-3 py-2 rounded-lg text-sm font-bold hover:bg-pink-50 flex-1">3小時</button>
+           <button type="button" data-hours="4" class="duration-btn bg-white text-pink-600 border-2 border-pink-400 px-3 py-2 rounded-lg text-sm font-bold hover:bg-pink-50 flex-1">4小時</button>
+          </div>
+         </div>
+        </div>
+        <div class="mt-4 bg-pink-50 border-2 border-pink-300 rounded-lg p-3">
+         <p class="text-xs font-bold text-pink-900 mb-1">🕐 已選時段：</p>
+         <div id="selected-time-display" class="text-sm text-pink-800 font-semibold">
+          <span class="text-gray-500">尚未選擇</span>
+         </div>
+        </div>
+       </div>
+
+       <div class="bg-white rounded-xl border-3 border-pink-300 p-6 shadow-lg">
+        <h3 class="text-lg font-bold text-pink-900 mb-2">💰 預約費用計算</h3>
+        <p class="text-xs text-pink-700 mb-4">💡 逢星期六日及公眾假期按假日費率，公眾假期在週一至五也按假日費率</p>
+        <div class="price-display">
+         <div id="price-breakdown" class="space-y-3 mb-4">
+          <p class="text-gray-500 text-center text-sm">請選擇房間、日期和時段</p>
+         </div>
+         <div id="video-service-option" style="display: none;" class="mb-3 p-3 bg-white rounded-lg border-2 border-amber-300">
+          <label class="flex items-center gap-2 cursor-pointer">
+           <input type="checkbox" id="video-service-checkbox" class="w-5 h-5 cursor-pointer">
+           <span class="font-bold text-pink-900">📹 加購錄影服務 <span id="video-service-price" class="text-amber-600"></span></span>
+          </label>
+         </div>
+         <div id="discount-display" style="display: none;" class="mb-3 p-3 bg-green-50 rounded-lg border-2 border-green-300">
+          <p class="text-sm font-bold text-green-700">🎉 舊客戶9折優惠</p>
+          <p class="text-xs text-green-600">原價 <span id="original-price-text" class="line-through"></span> → 折後 <span id="discount-price-text" class="font-bold"></span></p>
+         </div>
+         <div class="flex items-center justify-between pt-3 border-t-2 border-amber-400">
+          <span class="text-lg font-bold text-pink-900">總數：</span>
+          <span id="total-price-display" class="text-3xl font-bold text-pink-600">$0</span>
+         </div>
+        </div>
+       </div>
+
+       <div class="bg-white rounded-xl border-3 border-pink-300 p-6 shadow-lg">
+        <h3 class="text-lg font-bold text-pink-900 mb-4">📝 預約詳情</h3>
+        <div class="space-y-4">
+         <div>
+          <label class="block text-sm font-bold text-pink-900 mb-2">👤 預約人姓名：</label>
+          <input type="text" id="user-name" required class="input-pink">
+         </div>
+         <div>
+          <label class="block text-sm font-bold text-pink-900 mb-2">📱 WHATSAPP聯絡方法：</label>
+          <input type="tel" id="phone" required class="input-pink" placeholder="請輸入WhatsApp號碼">
+         </div>
+         <div>
+          <label class="block text-sm font-bold text-pink-900 mb-2">🎯 使用用途：</label>
+          <select id="purpose-select" class="select-pink">
+           <option value="一般預約">一般預約</option>
+           <option value="調音">調音</option>
+           <option value="內部使用">內部使用</option>
+           <option value="教學">教學</option>
+           <option value="練習">練習</option>
+           <option value="活動">活動</option>
+          </select>
+         </div>
+         <div id="returning-customer-container" style="display: block;">
+          <label class="flex items-center gap-2 cursor-pointer">
+           <input type="checkbox" id="is-returning-customer" class="w-5 h-5 cursor-pointer">
+           <span class="text-sm font-bold text-pink-900">舊客戶（自動9折）</span>
+          </label>
+         </div>
+         <div>
+          <label class="block text-sm font-bold text-pink-900 mb-2">📝 備註：</label>
+          <textarea id="notes" class="input-pink" rows="3" placeholder="如有其他特殊需求，請在此填寫"></textarea>
+         </div>
+         <div class="bg-pink-50 border-2 border-pink-300 rounded-lg p-4">
+          <label class="block text-sm font-bold text-pink-900 mb-2">💵 預計費用：</label>
+          <div class="flex items-center gap-3">
+           <span class="text-xl font-bold">$</span>
+           <input type="number" id="manual-price" min="0" step="1" class="input-pink w-40" readonly>
+          </div>
+         </div>
+         <div id="payment-instructions" class="pt-3 border-t-2 border-pink-300">
+          <p class="text-sm text-blue-700 mb-2">📱 請等候琴室WhatsApp聯絡安排付款</p>
+          <p class="text-xs text-blue-600 mb-3">⏰ 如24小時內未收到通知，請致電本琴室 <span class="font-bold">5400 1874</span> 確認預約</p>
+          <button type="submit" id="submit-booking-btn" class="btn-primary w-full py-4 text-base">
+            📝 提交預約申請
+          </button>
+         </div>
+         <div id="staff-payment-section" style="display: none;" class="pt-3 border-t-2 border-pink-300">
+          <p class="text-xs text-pink-700 mb-3">💡 立即付款確認預約，或先保留時段後付款</p>
+          <div class="grid grid-cols-2 gap-4">
+           <button type="button" id="submit-paid-btn" class="btn-primary py-4 text-base">✅ 立即付款確認預約</button>
+           <button type="button" id="submit-pending-btn" class="btn-secondary py-4 text-base">📝 先預約後付款</button>
+          </div>
+         </div>
+        </div>
+       </div>
+      </form>
+     </div>
+    </section>
+
+    <aside id="sidebar" class="flex flex-col overflow-hidden border-l-4 border-pink-300 shadow-xl" style="width: 30%; background: linear-gradient(180deg, #FDF2F8 0%, #FCE7F3 100%); display: none;">
+     <div class="flex-1 flex flex-col overflow-hidden">
+      <div class="px-6 py-4 bg-white border-b-2 border-pink-300">
+       <h2 class="text-xl font-bold text-pink-900 mb-3 flex items-center gap-2"><span class="text-2xl">📋</span> <span>預約清單</span></h2>
+       <div class="space-y-2">
+        <div>
+         <label class="block text-xs font-bold text-pink-900 mb-1">🔍 房間篩選</label>
+         <select id="room-filter" class="select-pink text-sm">
+          <option value="">全部房間</option>
+          <option value="A">房間A (三角琴)</option>
+          <option value="B">房間B (直身琴)</option>
+          <option value="C">房間C (數碼琴)</option>
+          <option value="D">房間D (直身琴)</option>
+          <option value="E">房間E (直身琴)</option>
+          <option value="1">房間1 (活動房)</option>
+          <option value="2">房間2 (直身琴伴奏)</option>
+         </select>
+        </div>
+        <div>
+         <label class="block text-xs font-bold text-pink-900 mb-1">🏷️ 狀態篩選</label>
+         <select id="status-filter" class="select-pink text-sm">
+          <option value="">全部狀態</option>
+          <option value="pending">待確認</option>
+          <option value="paid">已付款</option>
+         </select>
+        </div>
+        <div>
+         <label class="block text-xs font-bold text-pink-900 mb-1">📅 日期排序</label>
+         <select id="date-sort" class="select-pink text-sm">
+          <option value="future-first">未到日期優先</option>
+          <option value="past-first">過往日期優先</option>
+          <option value="newest">最新預約</option>
+         </select>
+        </div>
+       </div>
+      </div>
+      <div class="flex-1 overflow-y-auto scrollbar-pink p-6">
+       <div id="booking-list" class="space-y-3"></div>
+      </div>
+     </div>
+    </aside>
+   </main>
   </div>
 
-  <div id="toast-container" class="fixed top-10 right-6 z-50 space-y-2"></div>
+  <div id="toast-container" class="fixed top-20 right-6 z-50 space-y-3"></div>
 
   <script>
-    /* -----------------------------------------------------------
-       核心邏輯與 Email 通知功能
-    ----------------------------------------------------------- */
-    
-    // ⚠️ 這是你剛剛產生的 Google API 網址
+    // --- 這裡定義發送 Email 通知的 API 網址 ---
     const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzvnj29GP2k1dIDI6lMcpNxkg924NCqh99lCHDAs9jli2M8MF9Kxd99gX6V1Mf6j7W2/exec";
 
-    // 寄送 Email 的功能
+    // --- 新增發送 Email 的函式 ---
     function sendEmailNotification(recentBookings, finalPrice) {
       if (!recentBookings || recentBookings.length === 0) return;
       
@@ -164,121 +838,1600 @@
 
       fetch(GOOGLE_SCRIPT_URL, {
         method: 'POST',
-        mode: 'no-cors', // 解決跨域問題
+        mode: 'no-cors',
         body: JSON.stringify(payload)
       }).then(() => {
-        console.log("通知已送出至 Google Script");
-      }).catch(err => console.error("通知失敗:", err));
+        console.log("Email 通知已送出至 Google Script");
+      }).catch(err => {
+        console.error("Email 通知送出失敗:", err);
+      });
     }
 
-    // ... (保留你原本所有的變數定義: rooms, publicHolidays, bookings 等) ...
-    const rooms = [{ id: 'A', name: '房間A', rates: { weekday: 280, weekend: 380 }, hasVideo: true }, { id: 'B', name: '房間B', rates: { weekday: 60, weekend: 90 } }, { id: 'C', name: '房間C', rates: { weekday: 60, weekend: 90 } }, { id: 'D', name: '房間D', rates: { weekday: 60, weekend: 90 } }, { id: 'E', name: '房間E', rates: { weekday: 60, weekend: 90 } }, { id: '1', name: '房間1', rates: { weekday: 100, weekend: 150 } }, { id: '2', name: '房間2', rates: { weekday: 80, weekend: 120 } }];
-    let bookings = JSON.parse(localStorage.getItem('kaya_music_bookings') || '[]');
+    const rooms = [
+      { 
+        id: 'A', 
+        name: '房間A', 
+        subtitle: '(三角琴)', 
+        area: '約150呎', 
+        capacity: '2-10人', 
+        equipment: '📱 手機/相機腳架、譜架', 
+        rates: { weekday: 280, weekend: 380 },
+        videoRates: { weekday: 580, weekend: 680 },
+        hasVideo: true
+      },
+      { id: 'B', name: '房間B', subtitle: '(直身琴)', area: '約30呎', capacity: '2人', equipment: '譜架', rates: { weekday: 60, weekend: 90 }, hasVideo: false },
+      { id: 'C', name: '房間C', subtitle: '(數碼琴)', area: '約40呎', capacity: '2人', equipment: '譜架', rates: { weekday: 60, weekend: 90 }, hasVideo: false },
+      { id: 'D', name: '房間D', subtitle: '(直身琴)', area: '約30呎', capacity: '2人', equipment: '譜架', rates: { weekday: 60, weekend: 90 }, hasVideo: false },
+      { id: 'E', name: '房間E', subtitle: '(直身琴)', area: '約30呎', capacity: '2人', equipment: '譜架', rates: { weekday: 60, weekend: 90 }, hasVideo: false },
+      { id: '1', name: '房間1', subtitle: '(活動房)', area: '約70呎', capacity: '2-10人', equipment: '長桌、椅子(按需要數量提供)', rates: { weekday: 100, weekend: 150 }, hasVideo: false },
+      { id: '2', name: '房間2', subtitle: '(直身琴伴奏)', area: '約50呎', capacity: '2-3人', equipment: '譜架', rates: { weekday: 80, weekend: 120 }, hasVideo: false }
+    ];
+
+    // 完整的公眾假期數據（2025年）
+    const publicHolidays = {
+      // 2025年香港公眾假期
+      '2025-01-01': '元旦',
+      '2025-01-29': '農曆年初一',
+      '2025-01-30': '農曆年初二',
+      '2025-01-31': '農曆年初三',
+      '2025-04-04': '清明節',
+      '2025-04-18': '耶穌受難節',
+      '2025-04-19': '耶穌受難節翌日',
+      '2025-04-21': '復活節星期一',
+      '2025-05-01': '勞動節',
+      '2025-05-05': '佛誕',
+      '2025-06-09': '端午節',
+      '2025-07-01': '香港特別行政區成立紀念日',
+      '2025-09-08': '中秋節翌日',
+      '2025-10-01': '國慶日',
+      '2025-10-07': '重陽節',
+      '2025-12-25': '聖誕節',
+      '2025-12-26': '聖誕節後第一個周日',
+      
+      // 2026年香港公眾假期
+      '2026-01-01': '元旦',
+      '2026-02-17': '農曆年初一',
+      '2026-02-18': '農曆年初二',
+      '2026-02-19': '農曆年初三',
+      '2026-04-06': '清明節',
+      '2026-04-10': '耶穌受難節',
+      '2026-04-11': '耶穌受難節翌日',
+      '2026-04-13': '復活節星期一',
+      '2026-05-01': '勞動節',
+      '2026-05-25': '佛誕',
+      '2026-06-19': '端午節',
+      '2026-07-01': '香港特別行政區成立紀念日',
+      '2026-09-28': '中秋節翌日',
+      '2026-10-01': '國慶日',
+      '2026-10-26': '重陽節',
+      '2026-12-25': '聖誕節',
+      '2026-12-28': '聖誕節後第一個周日',
+      
+      // 2027年假期
+      '2027-01-01': '元旦',
+      '2027-02-06': '農曆新年初一',
+      '2027-02-07': '農曆新年初二',
+      '2027-02-08': '農曆新年初三',
+      '2027-02-09': '農曆新年初四',
+      '2027-03-26': '耶穌受難節',
+      '2027-03-27': '耶穌受難節翌日',
+      '2027-03-29': '復活節星期一',
+      '2027-04-05': '清明節',
+      '2027-05-01': '勞動節',
+      '2027-05-13': '佛誕',
+      '2027-06-09': '端午節',
+      '2027-07-01': '香港特別行政區成立紀念日',
+      '2027-09-16': '中秋節翌日',
+      '2027-10-01': '國慶日',
+      '2027-10-08': '重陽節',
+      '2027-12-25': '聖誕節',
+      '2027-12-27': '聖誕節後第一個周日',
+      
+      // 2028年假期
+      '2028-01-01': '元旦',
+      '2028-01-26': '農曆新年初一',
+      '2028-01-27': '農曆新年初二',
+      '2028-01-28': '農曆新年初三',
+      '2028-04-04': '清明節',
+      '2028-04-14': '耶穌受難節',
+      '2028-04-15': '耶穌受難節翌日',
+      '2028-04-17': '復活節星期一',
+      '2028-05-01': '勞動節',
+      '2028-05-02': '佛誕',
+      '2028-05-29': '端午節',
+      '2028-07-01': '香港特別行政區成立紀念日',
+      '2028-10-01': '國慶日',
+      '2028-10-04': '中秋節翌日',
+      '2028-10-26': '重陽節',
+      '2028-12-25': '聖誕節',
+      '2028-12-26': '聖誕節後第一個周日'
+    };
+
+    // 添加2029年假期（簡單預測）
+    function addFutureHolidays() {
+      const currentYear = new Date().getFullYear();
+      
+      // 添加2029年假期（簡單估算）
+      publicHolidays['2029-01-01'] = '元旦';
+      publicHolidays['2029-02-13'] = '農曆新年初一';
+      publicHolidays['2029-02-14'] = '農曆新年初二';
+      publicHolidays['2029-02-15'] = '農曆新年初三';
+      publicHolidays['2029-04-05'] = '清明節';
+      publicHolidays['2029-05-01'] = '勞動節';
+      publicHolidays['2029-07-01'] = '香港特別行政區成立紀念日';
+      publicHolidays['2029-10-01'] = '國慶日';
+      publicHolidays['2029-12-25'] = '聖誕節';
+      publicHolidays['2029-12-26'] = '聖誕節後第一個周日';
+    }
+    
+    addFutureHolidays();
+
+    const STAFF_PASSWORD = "kaya2026"; // 工作人員密碼
+
+    // 使用 localStorage 來儲存預約數據
+    const STORAGE_KEY = 'kaya_music_bookings';
+    const DEFAULT_BOOKINGS = [];
+
+    let bookings = [];
     let selectedDates = [];
+    let currentCalendarMonth = new Date(); // 設為當前月份
     let currentRoom = '';
+    let currentRoomFilter = '';
+    let currentStatusFilter = '';
+    let currentDateSort = 'future-first';
     let isStaffMode = false;
+    let isPublicMode = false;
 
-    // 修改 handlePublicBooking 以加入通知
-    async function handlePublicBooking() {
-      const startTime = document.getElementById('start-time-select').value;
-      const endTime = document.getElementById('end-time-select').value;
-      const userName = document.getElementById('user-name').value;
-      const phone = document.getElementById('phone').value;
-      const price = document.getElementById('manual-price').value;
+    // 新的收費計算函數（考慮週末下午2點前後）
+    function calculateRateForRoom(roomId, date, startTime) {
+      const isHoliday = isPublicHoliday(date);
+      const isWeekendDay = isWeekend(date);
+      
+      // 公眾假期一律按假日費率（全日）
+      if (isHoliday) {
+        if (['B', 'C', 'D', 'E'].includes(roomId)) return 90;
+        if (roomId === '2') return 120;
+      }
+      
+      // 週末考慮下午2點前後
+      if (isWeekendDay) {
+        const [startHour, startMinute] = startTime.split(':').map(Number);
+        const isAfter2PM = startHour >= 14; // 14:00及之後算下午2點後
+        
+        // B, C, D, E 房
+        if (['B', 'C', 'D', 'E'].includes(roomId)) {
+          return isAfter2PM ? 90 : 60;
+        }
+        
+        // 2房
+        if (roomId === '2') {
+          return isAfter2PM ? 120 : 80;
+        }
+      }
+      
+      // 平日或非B/C/D/E/2房
+      const room = rooms.find(r => r.id === roomId);
+      if (!room) return 0;
+      
+      return room.rates.weekday;
+    }
 
-      if (!currentRoom || selectedDates.length === 0 || !startTime || !endTime) {
-        showToast('請完整填寫資料', 'error');
+    // 計算錄影服務額外費用
+    function calculateVideoExtra(roomId, date, startTime) {
+      if (roomId === 'A') {
+        const isHoliday = isPublicHoliday(date);
+        const isWeekendDay = isWeekend(date);
+        const room = rooms.find(r => r.id === roomId);
+        
+        if (isHoliday || isWeekendDay) {
+          return room.videoRates.weekend - room.rates.weekend;
+        } else {
+          return room.videoRates.weekday - room.rates.weekday;
+        }
+      }
+      return 0;
+    }
+
+    // 載入預約數據
+    function loadBookings() {
+      try {
+        const saved = localStorage.getItem(STORAGE_KEY);
+        if (saved) {
+          const parsed = JSON.parse(saved);
+          bookings = parsed.map(booking => ({
+            id: booking.id || Date.now().toString() + Math.random().toString(36).substr(2, 9),
+            room_id: booking.room_id || '',
+            start_date: booking.start_date || '',
+            start_time: booking.start_time || '',
+            end_time: booking.end_time || '',
+            user_name: booking.user_name || '',
+            phone: booking.phone || '',
+            purpose: booking.purpose || '一般預約',
+            notes: booking.notes || '',
+            total_amount: booking.total_amount || 0,
+            original_amount: booking.original_amount || booking.total_amount || 0,
+            payment_status: booking.payment_status || 'pending',
+            is_returning_customer: booking.is_returning_customer || false,
+            manual_price_override: booking.manual_price_override || false,
+            created_at: booking.created_at || new Date().toISOString(),
+            has_video_service: booking.has_video_service || false,
+            date_nature: booking.date_nature || '平日',
+            is_past_date: booking.is_past_date || false
+          }));
+        } else {
+          bookings = DEFAULT_BOOKINGS;
+        }
+      } catch (e) {
+        console.error('載入預約數據失敗:', e);
+        bookings = DEFAULT_BOOKINGS;
+      }
+    }
+
+    // 儲存預約數據
+    function saveBookings() {
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(bookings));
+      } catch (e) {
+        console.error('儲存預約數據失敗:', e);
+      }
+    }
+
+    // 檢查時段是否衝突
+    function checkTimeConflict(roomId, dateStr, startTime, endTime, excludeBookingId = null) {
+      if (!startTime || !endTime) return false;
+      
+      const [startH, startM] = startTime.split(':').map(Number);
+      const [endH, endM] = endTime.split(':').map(Number);
+      const newStartMinutes = startH * 60 + startM;
+      const newEndMinutes = endH * 60 + endM;
+      
+      // 檢查是否與現有預約衝突
+      for (const booking of bookings) {
+        // 排除自身（編輯時）
+        if (excludeBookingId && booking.id === excludeBookingId) continue;
+        
+        // 只檢查相同房間和日期的預約
+        if (booking.room_id === roomId && booking.start_date === dateStr && booking.payment_status !== 'cancelled') {
+          const [existingStartH, existingStartM] = booking.start_time.split(':').map(Number);
+          const [existingEndH, existingEndM] = booking.end_time.split(':').map(Number);
+          const existingStartMinutes = existingStartH * 60 + existingStartM;
+          const existingEndMinutes = existingEndH * 60 + existingEndM;
+          
+          // 檢查時間是否重疊
+          const isOverlap = (
+            (newStartMinutes >= existingStartMinutes && newStartMinutes < existingEndMinutes) ||
+            (newEndMinutes > existingStartMinutes && newEndMinutes <= existingEndMinutes) ||
+            (newStartMinutes <= existingStartMinutes && newEndMinutes >= existingEndMinutes)
+          );
+          
+          if (isOverlap) {
+            return {
+              conflict: true,
+              conflictingBooking: booking,
+              message: `該時段與現有預約衝突（${booking.start_time} - ${booking.end_time}）`
+            };
+          }
+        }
+      }
+      
+      return { conflict: false };
+    }
+
+    // 檢查時長是否符合規則
+    function checkDurationRules(startTime, endTime) {
+      if (!startTime || !endTime) return { valid: false, message: '請選擇時段' };
+      
+      const [startH, startM] = startTime.split(':').map(Number);
+      const [endH, endM] = endTime.split(':').map(Number);
+      const durationMinutes = (endH * 60 + endM) - (startH * 60 + startM);
+      
+      // 最少1小時
+      if (durationMinutes < 60) {
+        return { valid: false, message: '預約時長最少1小時' };
+      }
+      
+      // 檢查是否符合半小時增量規則
+      const hours = durationMinutes / 60;
+      const remainder = hours % 0.5;
+      if (remainder > 0.01 && remainder < 0.49) {
+        return { valid: false, message: '時長必須是整小時或半小時（如：1小時、1.5小時、2小時、2.5小時）' };
+      }
+      
+      return { valid: true, hours: hours };
+    }
+
+    // 更新時段衝突警告
+    function updateTimeConflictWarning() {
+      const warningDiv = document.getElementById('time-conflict-warning');
+      const conflictMessage = document.getElementById('conflict-message');
+      
+      if (!currentRoom || selectedDates.length === 0) {
+        warningDiv.style.display = 'none';
         return;
       }
 
-      const newBookings = [];
+      const startTime = document.getElementById('start-time-select').value;
+      const endTime = document.getElementById('end-time-select').value;
+
+      if (!startTime || !endTime) {
+        warningDiv.style.display = 'none';
+        return;
+      }
+
+      let hasConflict = false;
+      let conflictDetails = [];
+
+      for (const date of selectedDates) {
+        const dateStr = date.toISOString().split('T')[0];
+        const conflict = checkTimeConflict(currentRoom, dateStr, startTime, endTime);
+        
+        if (conflict.conflict) {
+          hasConflict = true;
+          const dateDisplay = `${date.getMonth() + 1}/${date.getDate()}`;
+          conflictDetails.push(`${dateDisplay}: ${conflict.message}`);
+        }
+      }
+
+      if (hasConflict) {
+        warningDiv.style.display = 'block';
+        conflictMessage.innerHTML = conflictDetails.join('<br>');
+      } else {
+        warningDiv.style.display = 'none';
+      }
+    }
+
+    // 更新時長警告
+    function updateDurationWarning() {
+      const warningDiv = document.getElementById('duration-warning');
+      
+      const startTime = document.getElementById('start-time-select').value;
+      const endTime = document.getElementById('end-time-select').value;
+
+      if (!startTime || !endTime) {
+        warningDiv.style.display = 'none';
+        return;
+      }
+
+      const durationCheck = checkDurationRules(startTime, endTime);
+      
+      if (!durationCheck.valid) {
+        warningDiv.style.display = 'block';
+      } else {
+        warningDiv.style.display = 'none';
+      }
+    }
+
+    // 初始化應用
+    function initializeApp() {
+      loadBookings();
+      initializeEventListeners();
+      generateTimeOptions();
+      setupLoginMode();
+      
+      const currentYear = new Date().getFullYear();
+      document.getElementById('current-year-display').textContent = currentYear;
+      
+      currentCalendarMonth = new Date();
+      renderCalendar();
+    }
+
+    function setupLoginMode() {
+      document.getElementById('public-access-btn').addEventListener('click', () => {
+        isPublicMode = true;
+        isStaffMode = false;
+        enterPublicMode();
+      });
+
+      document.getElementById('staff-login-btn').addEventListener('click', () => {
+        const password = document.getElementById('staff-password').value;
+        if (password === STAFF_PASSWORD) {
+          isStaffMode = true;
+          isPublicMode = false;
+          enterStaffMode();
+        } else {
+          showToast('❌ 密碼錯誤', 'error');
+        }
+      });
+
+      document.getElementById('staff-password').addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+          document.getElementById('staff-login-btn').click();
+        }
+      });
+    }
+
+    function enterPublicMode() {
+      document.getElementById('login-overlay').style.display = 'none';
+      document.getElementById('app-content').style.display = 'flex';
+      document.getElementById('public-mode-badge').style.display = 'block';
+      document.getElementById('sidebar').style.display = 'none';
+      document.getElementById('statistics-section').style.display = 'none';
+      
+      document.querySelector('main').style.width = '100%';
+      
+      document.getElementById('returning-customer-container').style.display = 'none';
+      document.getElementById('staff-payment-section').style.display = 'none';
+      document.getElementById('payment-instructions').style.display = 'block';
+      
+      renderCalendar();
+    }
+
+    function enterStaffMode() {
+      document.getElementById('login-overlay').style.display = 'none';
+      document.getElementById('app-content').style.display = 'flex';
+      document.getElementById('public-mode-badge').style.display = 'none';
+      document.getElementById('sidebar').style.display = 'flex';
+      document.getElementById('statistics-section').style.display = 'flex';
+      
+      document.querySelector('main > section').style.width = '70%';
+      document.querySelector('main > aside').style.width = '30%';
+      
+      document.getElementById('returning-customer-container').style.display = 'block';
+      document.getElementById('staff-payment-section').style.display = 'block';
+      document.getElementById('payment-instructions').style.display = 'none';
+      
+      renderCalendar();
+      renderBookingList();
+      updateStatistics();
+    }
+
+    function initializeEventListeners() {
+      document.getElementById('today-btn').addEventListener('click', () => {
+        currentCalendarMonth = new Date();
+        renderCalendar();
+      });
+
+      document.getElementById('prev-month-btn').addEventListener('click', () => {
+        currentCalendarMonth.setMonth(currentCalendarMonth.getMonth() - 1);
+        renderCalendar();
+      });
+
+      document.getElementById('next-month-btn').addEventListener('click', () => {
+        currentCalendarMonth.setMonth(currentCalendarMonth.getMonth() + 1);
+        renderCalendar();
+      });
+
+      document.querySelectorAll('.room-card').forEach(card => {
+        card.addEventListener('click', () => {
+          document.querySelectorAll('.room-card').forEach(c => c.classList.remove('active'));
+          card.classList.add('active');
+          currentRoom = card.dataset.room;
+          showRoomInfo(currentRoom);
+          calculatePrice();
+          updateTimeConflictWarning();
+          updateDurationWarning();
+        });
+      });
+
+      // 時長按鈕事件
+      document.querySelectorAll('.duration-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const startTime = document.getElementById('start-time-select').value;
+          if (!startTime) {
+            showToast('請先選擇開始時間', 'warning');
+            return;
+          }
+          
+          const hours = parseFloat(btn.dataset.hours);
+          const [startH, startM] = startTime.split(':').map(Number);
+          const totalMinutes = startH * 60 + startM + (hours * 60);
+          
+          let endH = Math.floor(totalMinutes / 60);
+          let endM = totalMinutes % 60;
+          
+          if (endH > 22 || (endH === 22 && endM > 0)) {
+            endH = 22;
+            endM = 0;
+            showToast('結束時間已調整至22:00', 'info');
+          }
+          
+          const endTime = `${String(endH).padStart(2, '0')}:${String(endM).padStart(2, '0')}`;
+          document.getElementById('end-time-select').value = endTime;
+          
+          updateSelectedTimeDisplay();
+          calculatePrice();
+          updateTimeConflictWarning();
+          updateDurationWarning();
+        });
+      });
+
+      document.getElementById('start-time-select').addEventListener('change', () => {
+        updateSelectedTimeDisplay();
+        calculatePrice();
+        updateTimeConflictWarning();
+        updateDurationWarning();
+      });
+
+      document.getElementById('end-time-select').addEventListener('change', () => {
+        updateSelectedTimeDisplay();
+        calculatePrice();
+        updateTimeConflictWarning();
+        updateDurationWarning();
+      });
+
+      document.getElementById('purpose-select').addEventListener('change', calculatePrice);
+      document.getElementById('is-returning-customer').addEventListener('change', calculatePrice);
+      document.getElementById('video-service-checkbox').addEventListener('change', calculatePrice);
+
+      document.getElementById('room-filter').addEventListener('change', (e) => {
+        currentRoomFilter = e.target.value;
+        renderBookingList();
+      });
+
+      document.getElementById('status-filter').addEventListener('change', (e) => {
+        currentStatusFilter = e.target.value;
+        renderBookingList();
+      });
+
+      document.getElementById('date-sort').addEventListener('change', (e) => {
+        currentDateSort = e.target.value;
+        renderBookingList();
+      });
+
+      document.getElementById('booking-form').addEventListener('submit', (e) => {
+        e.preventDefault();
+        if (isStaffMode) {
+          handleFormSubmit('pending');
+        } else {
+          handlePublicBooking();
+        }
+      });
+
+      document.getElementById('submit-paid-btn').addEventListener('click', () => {
+        handleFormSubmit('paid');
+      });
+
+      document.getElementById('submit-pending-btn').addEventListener('click', () => {
+        handleFormSubmit('pending');
+      });
+    }
+
+    function showRoomInfo(roomId) {
+      const room = rooms.find(r => r.id === roomId);
+      if (!room) return;
+
+      document.getElementById('room-info').style.display = 'block';
+      document.getElementById('room-info-title').textContent = `${room.name} ${room.subtitle}`;
+      document.getElementById('room-info-area').textContent = room.area;
+      document.getElementById('room-info-capacity').textContent = room.capacity;
+      document.getElementById('room-info-equipment').textContent = room.equipment;
+      
+      // 根據房間類型顯示不同的收費信息
+      if (['B', 'C', 'D', 'E'].includes(roomId)) {
+        document.getElementById('room-info-rates').textContent = '平日(全日), 六及日(2pm前) $60 / 六及日(2pm後)及假日(全日) $90';
+      } else if (roomId === '2') {
+        document.getElementById('room-info-rates').textContent = '平日(全日), 六及日(2pm前) $80 / 六及日(2pm後)及假日(全日) $120';
+      } else if (roomId === 'A') {
+        document.getElementById('room-info-rates').textContent = `平日$${room.rates.weekday} / 假日$${room.rates.weekend}`;
+      } else if (roomId === '1') {
+        document.getElementById('room-info-rates').textContent = `平日$${room.rates.weekday} / 假日$${room.rates.weekend}`;
+      }
+
+      if (room.hasVideo) {
+        document.getElementById('room-info-video').style.display = 'block';
+        document.getElementById('room-info-video-rates').textContent = `平日$${room.videoRates.weekday} / 假日$${room.videoRates.weekend}`;
+      } else {
+        document.getElementById('room-info-video').style.display = 'none';
+      }
+    }
+
+    function generateTimeOptions() {
+      const startSelect = document.getElementById('start-time-select');
+      const endSelect = document.getElementById('end-time-select');
+      
+      startSelect.innerHTML = '<option value="">請選擇</option>';
+      endSelect.innerHTML = '<option value="">請選擇</option>';
+
+      for (let h = 8; h <= 22; h++) {
+        if (h < 22) {
+          const time = `${String(h).padStart(2, '0')}:00`;
+          const displayTime = formatTime(time);
+          
+          const option1 = document.createElement('option');
+          option1.value = time;
+          option1.textContent = displayTime;
+          startSelect.appendChild(option1);
+
+          const option2 = document.createElement('option');
+          option2.value = time;
+          option2.textContent = displayTime;
+          endSelect.appendChild(option2);
+        }
+        
+        if (h < 22) {
+          const time = `${String(h).padStart(2, '0')}:30`;
+          const displayTime = formatTime(time);
+          
+          const option1 = document.createElement('option');
+          option1.value = time;
+          option1.textContent = displayTime;
+          startSelect.appendChild(option1);
+
+          const option2 = document.createElement('option');
+          option2.value = time;
+          option2.textContent = displayTime;
+          endSelect.appendChild(option2);
+        }
+      }
+
+      const endOption = document.createElement('option');
+      endOption.value = '22:00';
+      endOption.textContent = formatTime('22:00');
+      endSelect.appendChild(endOption);
+    }
+
+    function formatTime(time) {
+      const [h, m] = time.split(':').map(Number);
+      if (h < 12) return `上午${h}:${String(m).padStart(2, '0')}`;
+      if (h === 12) return `下午${h}:${String(m).padStart(2, '0')}`;
+      return `下午${h-12}:${String(m).padStart(2, '0')}`;
+    }
+
+    function updateSelectedTimeDisplay() {
+      const startTime = document.getElementById('start-time-select').value;
+      const endTime = document.getElementById('end-time-select').value;
+      const display = document.getElementById('selected-time-display');
+
+      if (!startTime || !endTime) {
+        display.innerHTML = '<span class="text-gray-500">尚未選擇</span>';
+      } else {
+        const [startH, startM] = startTime.split(':').map(Number);
+        const [endH, endM] = endTime.split(':').map(Number);
+        const durationMinutes = (endH * 60 + endM) - (startH * 60 + startM);
+        const hours = durationMinutes / 60;
+        
+        display.innerHTML = `${formatTime(startTime)} - ${formatTime(endTime)} <span class="text-pink-600">(總時長：${hours}小時)</span>`;
+      }
+    }
+
+    function renderCalendar() {
+      const grid = document.getElementById('calendar-grid');
+      grid.innerHTML = '';
+
+      const year = currentCalendarMonth.getFullYear();
+      const month = currentCalendarMonth.getMonth();
+
+      document.getElementById('calendar-month-year').textContent = `${year}年${month + 1}月`;
+
+      const firstDay = new Date(year, month, 1);
+      const lastDay = new Date(year, month + 1, 0);
+      const startDay = firstDay.getDay();
+      const daysInMonth = lastDay.getDate();
+
+      const today = new Date();
+      today.setHours(12, 0, 0, 0);
+
+      for (let i = 0; i < startDay; i++) {
+        const emptyDiv = document.createElement('div');
+        emptyDiv.className = 'calendar-day disabled';
+        grid.appendChild(emptyDiv);
+      }
+
+      for (let day = 1; day <= daysInMonth; day++) {
+        const date = new Date(year, month, day, 12, 0, 0, 0);
+        const dayDiv = document.createElement('div');
+        dayDiv.className = 'calendar-day';
+        
+        const span = document.createElement('span');
+        span.textContent = day;
+        dayDiv.appendChild(span);
+
+        const isToday = date.getTime() === today.getTime();
+        const isSelected = selectedDates.some(d => d.getTime() === date.getTime());
+        
+        const dateStr = date.toISOString().split('T')[0];
+        const isPublicHolidayDate = !!publicHolidays[dateStr];
+        const isWeekendDay = date.getDay() === 0 || date.getDay() === 6;
+        
+        // 檢查是否有預約
+        const hasBookingOnDate = bookings.some(b => {
+          return b.start_date === dateStr && b.payment_status !== 'cancelled';
+        });
+        
+        // 紅圈標記：公眾假期或週末
+        if (isPublicHolidayDate || isWeekendDay) {
+          dayDiv.classList.add('red-circle');
+        }
+        
+        // 右上角紅點：已有預約
+        if (hasBookingOnDate) {
+          dayDiv.classList.add('has-booking');
+        }
+
+        if (isToday) dayDiv.classList.add('today');
+        if (isSelected) dayDiv.classList.add('selected');
+
+        // 添加公眾假期標籤
+        if (isPublicHolidayDate) {
+          const holidayBadge = document.createElement('div');
+          holidayBadge.className = 'holiday-badge';
+          holidayBadge.textContent = publicHolidays[dateStr];
+          dayDiv.appendChild(holidayBadge);
+        }
+
+        if (isPublicMode && date < today) {
+          dayDiv.classList.add('disabled');
+        }
+
+        if (!dayDiv.classList.contains('disabled')) {
+          dayDiv.addEventListener('click', () => toggleDateSelection(date));
+        }
+
+        grid.appendChild(dayDiv);
+      }
+    }
+
+    function toggleDateSelection(date) {
+      const normalizedDate = new Date(date.getFullYear(), date.getMonth(), date.getDate(), 12, 0, 0, 0);
+      const dateTime = normalizedDate.getTime();
+      const index = selectedDates.findIndex(d => d.getTime() === dateTime);
+      
+      if (index > -1) {
+        selectedDates.splice(index, 1);
+      } else {
+        selectedDates.push(normalizedDate);
+      }
+      
+      selectedDates.sort((a, b) => a - b);
+      updateSelectedDatesDisplay();
+      updateDateNatureAlerts();
+      renderCalendar();
+      calculatePrice();
+      updateTimeConflictWarning();
+      updateDurationWarning();
+    }
+
+    function updateSelectedDatesDisplay() {
+      const display = document.getElementById('selected-dates-display');
+      const countEl = document.getElementById('selected-count');
+      
+      countEl.textContent = selectedDates.length;
+      
+      if (selectedDates.length === 0) {
+        display.innerHTML = '<span class="text-xs text-gray-500">尚未選擇</span>';
+      } else {
+        display.innerHTML = selectedDates.map(d => {
+          const dateStr = `${d.getMonth() + 1}/${d.getDate()}`;
+          const dayNames = ['日', '一', '二', '三', '四', '五', '六'];
+          const dayStr = dayNames[d.getDay()];
+          const holidayName = isPublicHoliday(d);
+          const isWeekendDay = isWeekend(d);
+          const isHolidayRate = isWeekendDay || holidayName;
+          
+          const bgColor = isHolidayRate ? 'from-red-500 to-red-600' : 'from-pink-500 to-pink-600';
+          let holidayText = '';
+          
+          if (holidayName) {
+            holidayText = `<span class="ml-1 text-xs font-bold text-white bg-red-600 px-1 rounded">${holidayName}</span>`;
+          }
+          
+          return `<span class="px-3 py-1 bg-gradient-to-r ${bgColor} text-white rounded-lg text-xs font-bold">${dateStr} (${dayStr})${holidayText}</span>`;
+        }).join('');
+      }
+    }
+
+    function updateDateNatureAlerts() {
+      const container = document.getElementById('date-nature-alerts-container');
+      
+      if (selectedDates.length === 0) {
+        container.innerHTML = '';
+        return;
+      }
+
+      const alerts = selectedDates.map(date => {
+        const dateStr = `${date.getFullYear()}年${date.getMonth() + 1}月${date.getDate()}日`;
+        const dayNames = ['日', '一', '二', '三', '四', '五', '六'];
+        const dayStr = `星期${dayNames[date.getDay()]}`;
+        const holidayName = isPublicHoliday(date);
+        const isWeekendDay = isWeekend(date);
+        
+        let alertClass, alertIcon, natureText, rateText;
+        
+        if (isWeekendDay) {
+          alertClass = 'holiday-type';
+          alertIcon = '⚠️';
+          natureText = '週末';
+          rateText = '將自動套用假日收費標準';
+        } else if (holidayName) {
+          alertClass = 'public-holiday-type';
+          alertIcon = 'ℹ️';
+          natureText = `「${holidayName}」公眾假期`;
+          rateText = '將套用假日收費標準';
+        } else {
+          alertClass = 'weekday-type';
+          alertIcon = '✅';
+          natureText = '普通工作日';
+          rateText = '將套用平日收費標準';
+        }
+        
+        return `
+          <div class="date-nature-alert ${alertClass}">
+            <div class="flex items-start gap-3">
+              <div class="text-3xl">${alertIcon}</div>
+              <div class="flex-1">
+                <h4 class="text-base font-bold mb-2" style="color: ${alertClass === 'holiday-type' ? '#B91C1C' : alertClass === 'public-holiday-type' ? '#4338CA' : '#15803D'}">💡 系統提示：</h4>
+                <p class="text-sm font-semibold mb-1" style="color: ${alertClass === 'holiday-type' ? '#991B1B' : alertClass === 'public-holiday-type' ? '#3730A3' : '#166534'}">您選擇的 <strong>${dateStr} ${dayStr}</strong></p>
+                <p class="text-sm font-semibold mb-1" style="color: ${alertClass === 'holiday-type' ? '#991B1B' : alertClass === 'public-holiday-type' ? '#3730A3' : '#166534'}">為 <strong>${natureText}</strong></p>
+                <p class="text-sm font-bold" style="color: ${alertClass === 'holiday-type' ? '#DC2626' : alertClass === 'public-holiday-type' ? '#4F46E5' : '#16A34A'}">${rateText}</p>
+              </div>
+            </div>
+          </div>
+        `;
+      }).join('');
+      
+      container.innerHTML = alerts;
+    }
+
+    function isWeekend(date) {
+      const day = date.getDay();
+      return day === 0 || day === 6;
+    }
+
+    function isPublicHoliday(date) {
+      const dateStr = date.toISOString().split('T')[0];
+      return publicHolidays[dateStr];
+    }
+
+    function calculatePrice() {
+      updateDateNatureAlerts();
+
+      if (!currentRoom || selectedDates.length === 0) {
+        document.getElementById('price-breakdown').innerHTML = '<p class="text-gray-500 text-center text-sm">請選擇房間、日期和時段</p>';
+        document.getElementById('total-price-display').textContent = '$0';
+        document.getElementById('manual-price').value = '0';
+        document.getElementById('video-service-option').style.display = 'none';
+        document.getElementById('discount-display').style.display = 'none';
+        return;
+      }
+
+      const startTime = document.getElementById('start-time-select').value;
+      const endTime = document.getElementById('end-time-select').value;
+
+      if (!startTime || !endTime) {
+        document.getElementById('price-breakdown').innerHTML = '<p class="text-gray-500 text-center text-sm">請選擇時段</p>';
+        document.getElementById('total-price-display').textContent = '$0';
+        document.getElementById('manual-price').value = '0';
+        document.getElementById('video-service-option').style.display = 'none';
+        document.getElementById('discount-display').style.display = 'none';
+        return;
+      }
+
+      // 檢查時長規則
+      const durationCheck = checkDurationRules(startTime, endTime);
+      if (!durationCheck.valid) {
+        document.getElementById('price-breakdown').innerHTML = `<p class="text-red-600 font-bold text-center">${durationCheck.message}</p>`;
+        return;
+      }
+
+      const purpose = document.getElementById('purpose-select').value;
+      const isReturning = isStaffMode ? document.getElementById('is-returning-customer').checked : false;
+      const room = rooms.find(r => r.id === currentRoom);
+      const hasVideo = document.getElementById('video-service-checkbox').checked;
+      const hours = durationCheck.hours;
+
+      if (room.hasVideo) {
+        document.getElementById('video-service-option').style.display = 'block';
+      } else {
+        document.getElementById('video-service-option').style.display = 'none';
+      }
+
+      if (purpose === '調音' || purpose === '內部使用') {
+        document.getElementById('price-breakdown').innerHTML = '<p class="text-amber-600 font-bold text-center">🆓 調音/內部使用 - 免費</p>';
+        document.getElementById('total-price-display').textContent = '$0';
+        document.getElementById('manual-price').value = '0';
+        document.getElementById('discount-display').style.display = 'none';
+        return;
+      }
+
+      let breakdownHTML = '';
+      let totalPrice = 0;
+      let videoExtraTotal = 0;
+
       selectedDates.forEach(date => {
-        const b = {
-          id: Date.now() + Math.random(),
+        const rate = calculateRateForRoom(currentRoom, date, startTime);
+        
+        let datePrice = Math.round(rate * hours);
+        totalPrice += datePrice;
+
+        // 計算錄影服務額外費用
+        if (hasVideo && room.hasVideo) {
+          const videoExtra = calculateVideoExtra(currentRoom, date, startTime);
+          const videoExtraAmount = Math.round(videoExtra * hours);
+          videoExtraTotal += videoExtraAmount;
+          datePrice += videoExtraAmount;
+          totalPrice += videoExtraAmount;
+        }
+
+        const dateStr = `${date.getMonth() + 1}月${date.getDate()}日`;
+        const dayNames = ['日', '一', '二', '三', '四', '五', '六'];
+        const dayStr = `星期${dayNames[date.getDay()]}`;
+        const holidayName = isPublicHoliday(date);
+        const isWeekendDay = isWeekend(date);
+        const [startHour, startMinute] = startTime.split(':').map(Number);
+        const isAfter2PM = startHour >= 14;
+        
+        let natureLabel, cardClass, textColor, circleEmoji, rateDetail = '';
+        
+        if (isWeekendDay) {
+          natureLabel = '週末';
+          cardClass = 'holiday-calc';
+          textColor = '#991B1B';
+          circleEmoji = ' 🔴';
+          
+          // 添加週末時間段說明
+          if (isAfter2PM) {
+            rateDetail = '（週末2PM後）';
+          } else {
+            rateDetail = '（週末2PM前）';
+          }
+        } else if (holidayName) {
+          natureLabel = `${holidayName}（公眾假期）`;
+          cardClass = 'holiday-calc';
+          textColor = '#991B1B';
+          circleEmoji = ' 🔴';
+          rateDetail = '（假日全日）';
+        } else {
+          natureLabel = '普通工作日';
+          cardClass = 'weekday-calc';
+          textColor = '#166534';
+          circleEmoji = '';
+          rateDetail = '（平日全日）';
+        }
+        
+        const serviceType = (hasVideo && room.hasVideo) ? ' (含錄影)' : '';
+        const rateLabel = (isWeekendDay || holidayName) ? '假日費率' : '平日費率';
+        
+        breakdownHTML += `
+          <div class="calculation-card ${cardClass}">
+            <p class="text-xs font-bold mb-2" style="color: ${textColor}">📊 費用計算</p>
+            <div style="border-bottom: 2px dashed ${(isWeekendDay || holidayName) ? '#FCA5A5' : '#86EFAC'}; padding-bottom: 8px; margin-bottom: 8px;">
+              <p class="text-sm font-semibold mb-1" style="color: ${textColor}"><strong>日期：</strong>${dateStr} (${dayStr})${circleEmoji}</p>
+              <p class="text-sm font-semibold mb-1" style="color: ${textColor}"><strong>性質：</strong>${natureLabel}${rateDetail}</p>
+              <p class="text-sm font-semibold" style="color: ${textColor}"><strong>費率：</strong>${rateLabel} $${rate}/小時</p>
+            </div>
+            <p class="text-base font-bold mb-2" style="color: ${textColor}">
+              ${room.name}${serviceType} × ${hours}小時
+            </p>
+            <div style="border-top: 2px dashed ${(isWeekendDay || holidayName) ? '#FCA5A5' : '#86EFAC'}; padding-top: 8px; margin-top: 8px;">
+              <p class="text-sm font-semibold" style="color: ${textColor}">小計：<span class="text-lg font-bold">$${datePrice}</span></p>
+            </div>
+          </div>
+        `;
+      });
+
+      if (room.hasVideo) {
+        document.getElementById('video-service-price').textContent = `+$${videoExtraTotal}`;
+      }
+
+      const originalPrice = totalPrice;
+
+      if (isReturning) {
+        totalPrice = Math.round(totalPrice * 0.9);
+        document.getElementById('discount-display').style.display = 'block';
+        document.getElementById('original-price-text').textContent = `$${originalPrice}`;
+        document.getElementById('discount-price-text').textContent = `$${totalPrice}`;
+      } else {
+        document.getElementById('discount-display').style.display = 'none';
+      }
+
+      document.getElementById('price-breakdown').innerHTML = breakdownHTML;
+      document.getElementById('total-price-display').textContent = '$' + totalPrice;
+      document.getElementById('manual-price').value = totalPrice;
+    }
+
+    async function handlePublicBooking() {
+      if (!currentRoom) {
+        showToast('請選擇房間', 'error');
+        return;
+      }
+
+      if (selectedDates.length === 0) {
+        showToast('請選擇日期', 'error');
+        return;
+      }
+
+      const startTime = document.getElementById('start-time-select').value;
+      const endTime = document.getElementById('end-time-select').value;
+
+      if (!startTime || !endTime) {
+        showToast('請選擇時間', 'error');
+        return;
+      }
+
+      // 檢查時長規則
+      const durationCheck = checkDurationRules(startTime, endTime);
+      if (!durationCheck.valid) {
+        showToast(`⚠️ ${durationCheck.message}`, 'warning');
+        return;
+      }
+
+      // 檢查時段衝突
+      let hasTimeConflict = false;
+      for (const date of selectedDates) {
+        const dateStr = date.toISOString().split('T')[0];
+        const conflict = checkTimeConflict(currentRoom, dateStr, startTime, endTime);
+        if (conflict.conflict) {
+          hasTimeConflict = true;
+          showToast(`⚠️ ${dateStr} ${conflict.message}`, 'warning');
+          break;
+        }
+      }
+
+      if (hasTimeConflict) {
+        return;
+      }
+
+      const userName = document.getElementById('user-name').value;
+      const phone = document.getElementById('phone').value;
+      const purpose = document.getElementById('purpose-select').value;
+      const notes = document.getElementById('notes').value;
+      const hasVideo = document.getElementById('video-service-checkbox').checked;
+      const manualPrice = parseInt(document.getElementById('manual-price').value) || 0;
+      const calculatedPrice = parseInt(document.getElementById('total-price-display').textContent.replace('$', ''));
+
+      const btn = document.getElementById('submit-booking-btn');
+      const originalText = btn.textContent;
+      btn.disabled = true;
+      btn.textContent = '⏳ 處理中...';
+
+      let successCount = 0;
+
+      for (const date of selectedDates) {
+        const holidayName = isPublicHoliday(date);
+        const isWeekendDay = isWeekend(date);
+        
+        let dateNature = '平日';
+        if (isWeekendDay) {
+          dateNature = '週末';
+        } else if (holidayName) {
+          dateNature = holidayName;
+        }
+
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const isPastDate = date < today;
+
+        const booking = {
+          id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
           room_id: currentRoom,
           start_date: date.toISOString().split('T')[0],
           start_time: startTime,
           end_time: endTime,
           user_name: userName,
           phone: phone,
-          purpose: document.getElementById('purpose-select').value,
-          notes: document.getElementById('notes').value,
-          total_amount: parseInt(price),
-          payment_status: 'pending'
+          purpose: purpose,
+          notes: notes,
+          total_amount: manualPrice,
+          original_amount: calculatedPrice,
+          payment_status: 'pending',
+          is_returning_customer: false,
+          manual_price_override: false,
+          created_at: new Date().toISOString(),
+          has_video_service: hasVideo,
+          date_nature: dateNature,
+          is_past_date: isPastDate
         };
-        bookings.push(b);
-        newBookings.push(b);
+
+        bookings.push(booking);
+        successCount++;
+      }
+
+      btn.disabled = false;
+      btn.textContent = originalText;
+
+      if (successCount > 0) {
+        saveBookings();
+        
+        // --- 新增這兩行：觸發 Email 通知 ---
+        const recentBookings = bookings.slice(-successCount);
+        sendEmailNotification(recentBookings, manualPrice || calculatedPrice);
+        // ------------------------------------
+
+        showToast(`✅ 成功提交 ${successCount} 筆預約申請，請等候WhatsApp聯絡`, 'success');
+        resetForm();
+      }
+    }
+
+    async function handleFormSubmit(paymentStatus) {
+      if (!currentRoom) {
+        showToast('請選擇房間', 'error');
+        return;
+      }
+
+      if (selectedDates.length === 0) {
+        showToast('請選擇日期', 'error');
+        return;
+      }
+
+      const startTime = document.getElementById('start-time-select').value;
+      const endTime = document.getElementById('end-time-select').value;
+
+      if (!startTime || !endTime) {
+        showToast('請選擇時間', 'error');
+        return;
+      }
+
+      // 檢查時長規則
+      const durationCheck = checkDurationRules(startTime, endTime);
+      if (!durationCheck.valid) {
+        showToast(`⚠️ ${durationCheck.message}`, 'warning');
+        return;
+      }
+
+      // 檢查時段衝突
+      let hasTimeConflict = false;
+      for (const date of selectedDates) {
+        const dateStr = date.toISOString().split('T')[0];
+        const conflict = checkTimeConflict(currentRoom, dateStr, startTime, endTime);
+        if (conflict.conflict) {
+          hasTimeConflict = true;
+          showToast(`⚠️ ${dateStr} ${conflict.message}`, 'warning');
+          break;
+        }
+      }
+
+      if (hasTimeConflict) {
+        return;
+      }
+
+      const userName = document.getElementById('user-name').value;
+      const phone = document.getElementById('phone').value;
+      const purpose = document.getElementById('purpose-select').value;
+      const notes = document.getElementById('notes').value;
+      const isReturning = document.getElementById('is-returning-customer').checked;
+      const hasVideo = document.getElementById('video-service-checkbox').checked;
+      const manualPrice = parseInt(document.getElementById('manual-price').value) || 0;
+      const calculatedPrice = parseInt(document.getElementById('total-price-display').textContent.replace('$', ''));
+
+      const btn = paymentStatus === 'paid' ? document.getElementById('submit-paid-btn') : document.getElementById('submit-pending-btn');
+      const originalText = btn.textContent;
+      btn.disabled = true;
+      btn.textContent = '⏳ 處理中...';
+
+      let successCount = 0;
+
+      for (const date of selectedDates) {
+        const holidayName = isPublicHoliday(date);
+        const isWeekendDay = isWeekend(date);
+        
+        let dateNature = '平日';
+        if (isWeekendDay) {
+          dateNature = '週末';
+        } else if (holidayName) {
+          dateNature = holidayName;
+        }
+
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const isPastDate = date < today;
+
+        const booking = {
+          id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
+          room_id: currentRoom,
+          start_date: date.toISOString().split('T')[0],
+          start_time: startTime,
+          end_time: endTime,
+          user_name: userName,
+          phone: phone,
+          purpose: purpose,
+          notes: notes,
+          total_amount: manualPrice,
+          original_amount: calculatedPrice,
+          payment_status: paymentStatus,
+          is_returning_customer: isReturning,
+          manual_price_override: manualPrice !== calculatedPrice,
+          created_at: new Date().toISOString(),
+          has_video_service: hasVideo,
+          date_nature: dateNature,
+          is_past_date: isPastDate
+        };
+
+        bookings.push(booking);
+        successCount++;
+      }
+
+      btn.disabled = false;
+      btn.textContent = originalText;
+
+      if (successCount > 0) {
+        saveBookings();
+        
+        // --- 新增這兩行：觸發 Email 通知 ---
+        const recentBookings = bookings.slice(-successCount);
+        sendEmailNotification(recentBookings, manualPrice || calculatedPrice);
+        // ------------------------------------
+
+        const statusText = paymentStatus === 'paid' ? '已付款' : '待付款';
+        showToast(`✅ 成功創建 ${successCount} 筆預約（${statusText}）`, 'success');
+        resetForm();
+        renderBookingList();
+        updateStatistics();
+      }
+    }
+
+    function resetForm() {
+      document.getElementById('booking-form').reset();
+      selectedDates = [];
+      currentRoom = '';
+      updateSelectedDatesDisplay();
+      updateSelectedTimeDisplay();
+      updateDateNatureAlerts();
+      updateTimeConflictWarning();
+      updateDurationWarning();
+      renderCalendar();
+      document.getElementById('room-info').style.display = 'none';
+      document.getElementById('price-breakdown').innerHTML = '<p class="text-gray-500 text-center text-sm">請選擇房間、日期和時段</p>';
+      document.getElementById('total-price-display').textContent = '$0';
+      document.getElementById('video-service-option').style.display = 'none';
+      document.getElementById('discount-display').style.display = 'none';
+      document.querySelectorAll('.room-card').forEach(c => c.classList.remove('active'));
+    }
+
+    function renderBookingList() {
+      if (!isStaffMode) return;
+      
+      const container = document.getElementById('booking-list');
+      
+      let filteredBookings = bookings;
+      
+      if (currentRoomFilter) {
+        filteredBookings = filteredBookings.filter(b => b.room_id === currentRoomFilter);
+      }
+
+      if (currentStatusFilter) {
+        filteredBookings = filteredBookings.filter(b => b.payment_status === currentStatusFilter);
+      }
+
+      // 根據排序選項排序
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+
+      filteredBookings.sort((a, b) => {
+        const dateA = new Date(a.start_date);
+        const dateB = new Date(b.start_date);
+        const isFutureA = dateA >= today;
+        const isFutureB = dateB >= today;
+
+        switch (currentDateSort) {
+          case 'future-first':
+            if (isFutureA && !isFutureB) return -1;
+            if (!isFutureA && isFutureB) return 1;
+            return dateA - dateB;
+          case 'past-first':
+            if (!isFutureA && isFutureB) return -1;
+            if (isFutureA && !isFutureB) return 1;
+            return dateB - dateA;
+          case 'newest':
+            return new Date(b.created_at) - new Date(a.created_at);
+          default:
+            return dateA - dateB;
+        }
       });
 
-      localStorage.setItem('kaya_music_bookings', JSON.stringify(bookings));
-      
-      // ✅ 執行寄信通知
-      sendEmailNotification(newBookings, price);
+      if (filteredBookings.length === 0) {
+        container.innerHTML = '<p class="text-center text-gray-400 py-8 text-sm">暫無預約記錄</p>';
+        return;
+      }
 
-      showToast('✅ 預約提交成功！請等候 WhatsApp 聯絡', 'success');
-      resetForm();
-    }
-
-    // ... (其餘 UI 控制邏輯、日曆渲染、價格計算等，均保留你原本的程式碼) ...
-    // 為簡化回覆，下方省略重複的 UI 渲染代碼，請將此 Script 區塊整合進你原本的代碼中即可
-    
-    // 初始化與事件綁定 (範例)
-    document.getElementById('booking-form').addEventListener('submit', (e) => {
-        e.preventDefault();
-        handlePublicBooking();
-    });
-
-    // 登入邏輯
-    document.getElementById('public-access-btn').onclick = () => {
-        document.getElementById('login-overlay').style.display = 'none';
-        document.getElementById('app-content').style.display = 'flex';
-    };
-    
-    document.getElementById('staff-login-btn').onclick = () => {
-        if(document.getElementById('staff-password').value === 'kaya2026') {
-            isStaffMode = true;
-            document.getElementById('login-overlay').style.display = 'none';
-            document.getElementById('app-content').style.display = 'flex';
-            document.getElementById('sidebar').style.display = 'block';
-            document.getElementById('statistics-section').style.display = 'flex';
+      container.innerHTML = filteredBookings.map(booking => {
+        const room = rooms.find(r => r.id === booking.room_id);
+        const dateObj = new Date(booking.start_date);
+        const dayNames = ['日', '一', '二', '三', '四', '五', '六'];
+        
+        let dateStr = `${dateObj.getFullYear()}/${dateObj.getMonth() + 1}/${dateObj.getDate()} 星期${dayNames[dateObj.getDay()]}`;
+        let dateLabel = '';
+        
+        const dateNature = booking.date_nature || '';
+        const isWeekendDay = dateObj.getDay() === 0 || dateObj.getDay() === 6;
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const isPastBooking = dateObj < today;
+        const isFutureBooking = dateObj >= today;
+        
+        if (isWeekendDay) {
+          dateLabel = `<span class="inline-block ml-2 px-2 py-1 bg-red-100 text-red-800 text-xs font-bold rounded">🔴 [週末]</span>`;
+        } else if (dateNature && dateNature !== '平日') {
+          dateLabel = `<span class="inline-block ml-2 px-2 py-1 bg-blue-100 text-blue-800 text-xs font-bold rounded">[${dateNature}]</span>`;
+        } else {
+          dateLabel = '<span class="inline-block ml-2 px-2 py-1 bg-green-100 text-green-800 text-xs font-bold rounded">[平日]</span>';
         }
+        
+        const bookingCardClass = isFutureBooking ? 'future-booking' : 'past-booking';
+        
+        const statusBadge = booking.payment_status === 'paid' 
+          ? '<span class="status-badge status-paid">✅ 已付款</span>' 
+          : '<span class="status-badge status-pending">⏳ 待確認</span>';
+
+        const payButton = booking.payment_status === 'pending' 
+          ? `<button class="btn-pay" onclick="confirmPayment('${booking.id}')">💰 確認付款</button>` 
+          : '';
+
+        return `
+          <div class="booking-card ${bookingCardClass}">
+            <div class="mb-2 flex justify-between items-start">
+              <h4 class="font-bold text-pink-900 text-sm">
+                ${room ? room.name : booking.room_id} ${room ? room.subtitle : ''}
+              </h4>
+              ${statusBadge}
+            </div>
+            
+            <div class="text-xs text-pink-900 space-y-1 mb-2">
+              <p><strong>📅</strong> ${dateStr}${dateLabel}</p>
+              <p><strong>⏰</strong> ${formatTime(booking.start_time)} - ${formatTime(booking.end_time)}</p>
+              <p><strong>👤</strong> ${booking.user_name}</p>
+              <p><strong>📱</strong> ${booking.phone}</p>
+              <p><strong>🎯</strong> ${booking.purpose}</p>
+              ${booking.notes ? `<p><strong>📝</strong> ${booking.notes}</p>` : ''}
+              ${booking.has_video_service ? '<p><strong>📹</strong> 含錄影服務</p>' : ''}
+              <p><strong>💰</strong> <span class="font-bold text-pink-600">$${booking.total_amount}</span>
+              ${booking.manual_price_override ? '<span class="text-xs text-orange-600"> (手動改價)</span>' : ''}
+              ${booking.is_returning_customer ? '<span class="text-xs text-green-600"> (舊客戶9折)</span>' : ''}
+              </p>
+            </div>
+            
+            <div class="flex gap-2">
+              ${payButton}
+              <button class="btn-edit flex-1" onclick="editBooking('${booking.id}')">✏️ 編輯</button>
+              <button class="btn-delete flex-1" onclick="deleteBooking('${booking.id}')">🗑️ 取消</button>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    window.confirmPayment = async function(bookingId) {
+      const booking = bookings.find(b => b.id === bookingId);
+      if (!booking) return;
+
+      const modal = document.createElement('div');
+      modal.className = 'modal-overlay';
+      modal.innerHTML = `
+        <div class="modal-content p-8">
+          <h3 class="text-xl font-bold text-pink-900 mb-4">💰 確認付款</h3>
+          <p class="text-pink-800 mb-6">確定已收到 <strong>${booking.user_name}</strong> 的款項 <strong>$${booking.total_amount}</strong> 嗎？</p>
+          <div class="flex gap-3">
+            <button id="confirm-pay" class="btn-primary flex-1 py-3">✅ 確認付款</button>
+            <button id="cancel-pay" class="btn-secondary flex-1 py-3">返回</button>
+          </div>
+        </div>
+      `;
+      
+      document.body.appendChild(modal);
+
+      document.getElementById('confirm-pay').addEventListener('click', async () => {
+        booking.payment_status = 'paid';
+        saveBookings();
+        showToast('✅ 付款狀態已更新', 'success');
+        document.body.removeChild(modal);
+        renderBookingList();
+        updateStatistics();
+      });
+
+      document.getElementById('cancel-pay').addEventListener('click', () => {
+        document.body.removeChild(modal);
+      });
     };
-    
-    // 初始呼叫
-    function showToast(m, t) {
-        const div = document.createElement('div');
-        div.className = `p-4 rounded shadow-lg text-white ${t==='success'?'bg-green-500':'bg-red-500'}`;
-        div.textContent = m;
-        document.getElementById('toast-container').appendChild(div);
-        setTimeout(()=>div.remove(), 3000);
-    }
-    
-    // 時間選項生成
-    const startS = document.getElementById('start-time-select');
-    const endS = document.getElementById('end-time-select');
-    for(let i=8; i<22; i++) {
-        let t = `${i<10?'0'+i:i}:00`;
-        startS.innerHTML += `<option value="${t}">${t}</option>`;
-        endS.innerHTML += `<option value="${t}">${t}</option>`;
+
+    window.editBooking = function(bookingId) {
+      const booking = bookings.find(b => b.id === bookingId);
+      if (!booking) return;
+
+      const modal = document.createElement('div');
+      modal.className = 'modal-overlay';
+      modal.innerHTML = `
+        <div class="modal-content p-8">
+          <h3 class="text-2xl font-bold text-pink-900 mb-6">✏️ 編輯預約</h3>
+          
+          <form id="edit-form" class="space-y-4">
+            <div>
+              <label class="block text-sm font-bold text-pink-900 mb-2">預約人姓名</label>
+              <input type="text" id="edit-name" value="${booking.user_name}" class="input-pink">
+            </div>
+            
+            <div>
+              <label class="block text-sm font-bold text-pink-900 mb-2">WhatsApp聯絡方法</label>
+              <input type="tel" id="edit-phone" value="${booking.phone}" class="input-pink">
+            </div>
+            
+            <div>
+              <label class="block text-sm font-bold text-pink-900 mb-2">開始時間</label>
+              <select id="edit-start-time" class="select-pink">
+                ${generateTimeOptionsForEdit(booking.start_time)}
+              </select>
+            </div>
+
+            <div>
+              <label class="block text-sm font-bold text-pink-900 mb-2">結束時間</label>
+              <select id="edit-end-time" class="select-pink">
+                ${generateTimeOptionsForEdit(booking.end_time)}
+              </select>
+            </div>
+
+            <div>
+              <label class="block text-sm font-bold text-pink-900 mb-2">付款狀態</label>
+              <select id="edit-payment-status" class="select-pink">
+                <option value="pending" ${booking.payment_status === 'pending' ? 'selected' : ''}>待確認</option>
+                <option value="paid" ${booking.payment_status === 'paid' ? 'selected' : ''}>已付款</option>
+              </select>
+            </div>
+            
+            <div>
+              <label class="block text-sm font-bold text-pink-900 mb-2">備註</label>
+              <textarea id="edit-notes" class="input-pink" rows="2">${booking.notes || ''}</textarea>
+            </div>
+            
+            <div>
+              <label class="block text-sm font-bold text-pink-900 mb-2">手動調整價格</label>
+              <div class="flex items-center gap-2">
+                <span class="text-lg font-bold">$</span>
+                <input type="number" id="edit-price" value="${booking.total_amount}" min="0" class="input-pink">
+              </div>
+            </div>
+            
+            <div class="flex gap-3 pt-4">
+              <button type="submit" class="btn-primary flex-1 py-3">✅ 保存更改</button>
+              <button type="button" id="cancel-edit" class="btn-delete flex-1 py-3">✕ 取消</button>
+            </div>
+          </form>
+        </div>
+      `;
+      
+      document.body.appendChild(modal);
+
+      document.getElementById('edit-form').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        
+        const newStartTime = document.getElementById('edit-start-time').value;
+        const newEndTime = document.getElementById('edit-end-time').value;
+        const durationCheck = checkDurationRules(newStartTime, newEndTime);
+        
+        if (!durationCheck.valid) {
+          showToast(`⚠️ ${durationCheck.message}`, 'warning');
+          return;
+        }
+        
+        const conflict = checkTimeConflict(booking.room_id, booking.start_date, newStartTime, newEndTime, booking.id);
+        
+        if (conflict.conflict) {
+          showToast(`⚠️ ${conflict.message}`, 'warning');
+          return;
+        }
+        
+        const newPrice = parseInt(document.getElementById('edit-price').value);
+        booking.user_name = document.getElementById('edit-name').value;
+        booking.phone = document.getElementById('edit-phone').value;
+        booking.start_time = newStartTime;
+        booking.end_time = newEndTime;
+        booking.payment_status = document.getElementById('edit-payment-status').value;
+        booking.notes = document.getElementById('edit-notes').value;
+        booking.total_amount = newPrice;
+        booking.manual_price_override = newPrice !== booking.original_amount;
+
+        saveBookings();
+        showToast('✅ 預約已更新', 'success');
+        document.body.removeChild(modal);
+        renderBookingList();
+        renderCalendar();
+        updateStatistics();
+      });
+
+      document.getElementById('cancel-edit').addEventListener('click', () => {
+        document.body.removeChild(modal);
+      });
+    };
+
+    function generateTimeOptionsForEdit(selectedTime) {
+      let options = '';
+      for (let h = 8; h <= 22; h++) {
+        if (h < 22) {
+          const time = `${String(h).padStart(2, '0')}:00`;
+          const selected = time === selectedTime ? 'selected' : '';
+          options += `<option value="${time}" ${selected}>${formatTime(time)}</option>`;
+        }
+        
+        if (h < 22) {
+          const time = `${String(h).padStart(2, '0')}:30`;
+          const selected = time === selectedTime ? 'selected' : '';
+          options += `<option value="${time}" ${selected}>${formatTime(time)}</option>`;
+        }
+      }
+      
+      const time = '22:00';
+      const selected = time === selectedTime ? 'selected' : '';
+      options += `<option value="${time}" ${selected}>${formatTime(time)}</option>`;
+      
+      return options;
     }
 
-    // 房間點擊
-    document.querySelectorAll('.room-card').forEach(card => {
-        card.onclick = () => {
-            document.querySelectorAll('.room-card').forEach(c => c.classList.remove('active'));
-            card.classList.add('active');
-            currentRoom = card.dataset.room;
-            document.getElementById('manual-price').value = 100; // 簡易預設
-            document.getElementById('total-price-display').textContent = '$100';
-        };
-    });
-    
-    function resetForm() {
-        document.getElementById('booking-form').reset();
-        selectedDates = [];
-        document.getElementById('selected-dates-display').innerHTML = '';
+    window.deleteBooking = function(bookingId) {
+      const booking = bookings.find(b => b.id === bookingId);
+      if (!booking) return;
+
+      const modal = document.createElement('div');
+      modal.className = 'modal-overlay';
+      modal.innerHTML = `
+        <div class="modal-content p-8">
+          <h3 class="text-xl font-bold text-pink-900 mb-4">🗑️ 確認取消預約</h3>
+          <p class="text-pink-800 mb-6">確定要取消 <strong>${booking.user_name}</strong> 的預約嗎？</p>
+          <div class="flex gap-3">
+            <button id="confirm-delete" class="btn-delete flex-1 py-3">確認取消</button>
+            <button id="cancel-delete" class="btn-primary flex-1 py-3">返回</button>
+          </div>
+        </div>
+      `;
+      
+      document.body.appendChild(modal);
+
+      document.getElementById('confirm-delete').addEventListener('click', async () => {
+        const index = bookings.findIndex(b => b.id === bookingId);
+        if (index > -1) {
+          bookings.splice(index, 1);
+          saveBookings();
+          showToast('✅ 預約已取消', 'success');
+          document.body.removeChild(modal);
+          renderBookingList();
+          renderCalendar();
+          updateStatistics();
+        }
+      });
+
+      document.getElementById('cancel-delete').addEventListener('click', () => {
+        document.body.removeChild(modal);
+      });
+    };
+
+    function updateStatistics() {
+      if (!isStaffMode) return;
+      
+      const currentYear = new Date().getFullYear();
+      const currentMonth = new Date().getMonth();
+      
+      const paidBookings = bookings.filter(b => b.payment_status === 'paid');
+
+      const monthIncome = paidBookings
+        .filter(b => {
+          const date = new Date(b.start_date);
+          return date.getFullYear() === currentYear && date.getMonth() === currentMonth;
+        })
+        .reduce((sum, b) => sum + b.total_amount, 0);
+
+      const yearIncome = paidBookings
+        .filter(b => {
+          const date = new Date(b.start_date);
+          return date.getFullYear() === currentYear;
+        })
+        .reduce((sum, b) => sum + b.total_amount, 0);
+
+      document.getElementById('month-income').textContent = '$' + monthIncome;
+      document.getElementById('year-income').textContent = '$' + yearIncome;
     }
 
+    function showToast(message, type = 'info') {
+      const container = document.getElementById('toast-container');
+      const toast = document.createElement('div');
+      
+      const bgColors = {
+        success: 'linear-gradient(135deg, #10B981 0%, #059669 100%)',
+        error: 'linear-gradient(135deg, #EF4444 0%, #DC2626 100%)',
+        warning: 'linear-gradient(135deg, #F59E0B 0%, #D97706 100%)',
+        info: 'linear-gradient(135deg, #EC4899 0%, #DB2777 100%)'
+      };
+      
+      toast.style.background = bgColors[type];
+      toast.className = 'text-white px-6 py-3 rounded-xl shadow-2xl font-bold';
+      toast.textContent = message;
+      
+      container.appendChild(toast);
+
+      setTimeout(() => {
+        toast.style.opacity = '0';
+        toast.style.transition = 'opacity 0.4s ease';
+        setTimeout(() => container.removeChild(toast), 400);
+      }, 3000);
+    }
+
+    // 頁面加載時初始化
+    document.addEventListener('DOMContentLoaded', initializeApp);
   </script>
 </body>
 </html>
