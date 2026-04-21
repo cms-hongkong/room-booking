@@ -982,37 +982,20 @@
     let isStaffMode = false;
     let isPublicMode = false;
 
-    // 新的收費計算函數（考慮週末下午2點前後）
+    // --- 修改後的收費計算函數（全日統一收費，無 2PM 之分） ---
     function calculateRateForRoom(roomId, date, startTime) {
       const isHoliday = isPublicHoliday(date);
       const isWeekendDay = isWeekend(date);
-      
-      // 公眾假期一律按假日費率（全日）
-      if (isHoliday) {
-        if (['B', 'C', 'D', 'E'].includes(roomId)) return 90;
-        if (roomId === '2') return 120;
-      }
-      
-      // 週末考慮下午2點前後
-      if (isWeekendDay) {
-        const [startHour, startMinute] = startTime.split(':').map(Number);
-        const isAfter2PM = startHour >= 14; // 14:00及之後算下午2點後
-        
-        // B, C, D, E 房
-        if (['B', 'C', 'D', 'E'].includes(roomId)) {
-          return isAfter2PM ? 90 : 60;
-        }
-        
-        // 2房
-        if (roomId === '2') {
-          return isAfter2PM ? 120 : 80;
-        }
-      }
-      
-      // 平日或非B/C/D/E/2房
       const room = rooms.find(r => r.id === roomId);
+      
       if (!room) return 0;
       
+      // 若為公眾假期或週末，回傳假日價錢
+      if (isHoliday || isWeekendDay) {
+        return room.rates.weekend;
+      }
+      
+      // 否則回傳平日價錢
       return room.rates.weekday;
     }
 
@@ -1386,6 +1369,7 @@
       });
     }
 
+    // --- 修改後的房間資訊面板顯示（統一顯示平日與假日價格） ---
     function showRoomInfo(roomId) {
       const room = rooms.find(r => r.id === roomId);
       if (!room) return;
@@ -1396,16 +1380,8 @@
       document.getElementById('room-info-capacity').textContent = room.capacity;
       document.getElementById('room-info-equipment').textContent = room.equipment;
       
-      // 根據房間類型顯示不同的收費信息
-      if (['B', 'C', 'D', 'E'].includes(roomId)) {
-        document.getElementById('room-info-rates').textContent = '平日(全日), 六及日(2pm前) $60 / 六及日(2pm後)及假日(全日) $90';
-      } else if (roomId === '2') {
-        document.getElementById('room-info-rates').textContent = '平日(全日), 六及日(2pm前) $80 / 六及日(2pm後)及假日(全日) $120';
-      } else if (roomId === 'A') {
-        document.getElementById('room-info-rates').textContent = `平日$${room.rates.weekday} / 假日$${room.rates.weekend}`;
-      } else if (roomId === '1') {
-        document.getElementById('room-info-rates').textContent = `平日$${room.rates.weekday} / 假日$${room.rates.weekend}`;
-      }
+      // 統一顯示收費格式（無 2PM 之分）
+      document.getElementById('room-info-rates').textContent = `平日$${room.rates.weekday} / 假日$${room.rates.weekend}`;
 
       if (room.hasVideo) {
         document.getElementById('room-info-video').style.display = 'block';
@@ -1672,6 +1648,7 @@
       return publicHolidays[dateStr];
     }
 
+    // --- 修改後的收費計算顯示邏輯（去除 2PM 文字） ---
     function calculatePrice() {
       updateDateNatureAlerts();
 
@@ -1747,8 +1724,6 @@
         const dayStr = `星期${dayNames[date.getDay()]}`;
         const holidayName = isPublicHoliday(date);
         const isWeekendDay = isWeekend(date);
-        const [startHour, startMinute] = startTime.split(':').map(Number);
-        const isAfter2PM = startHour >= 14;
         
         let natureLabel, cardClass, textColor, circleEmoji, rateDetail = '';
         
@@ -1757,13 +1732,7 @@
           cardClass = 'holiday-calc';
           textColor = '#991B1B';
           circleEmoji = ' 🔴';
-          
-          // 添加週末時間段說明
-          if (isAfter2PM) {
-            rateDetail = '（週末2PM後）';
-          } else {
-            rateDetail = '（週末2PM前）';
-          }
+          rateDetail = '（假日全日）'; // 移除了原本的2PM邏輯
         } else if (holidayName) {
           natureLabel = `${holidayName}（公眾假期）`;
           cardClass = 'holiday-calc';
@@ -1922,10 +1891,9 @@
       if (successCount > 0) {
         saveBookings();
         
-        // --- 新增這兩行：觸發 Email 通知 ---
+        // --- 觸發 Email 通知 ---
         const recentBookings = bookings.slice(-successCount);
         sendEmailNotification(recentBookings, manualPrice || calculatedPrice);
-        // ------------------------------------
 
         showToast(`✅ 成功提交 ${successCount} 筆預約申請，請等候WhatsApp聯絡`, 'success');
         resetForm();
@@ -2036,10 +2004,9 @@
       if (successCount > 0) {
         saveBookings();
         
-        // --- 新增這兩行：觸發 Email 通知 ---
+        // --- 觸發 Email 通知 ---
         const recentBookings = bookings.slice(-successCount);
         sendEmailNotification(recentBookings, manualPrice || calculatedPrice);
-        // ------------------------------------
 
         const statusText = paymentStatus === 'paid' ? '已付款' : '待付款';
         showToast(`✅ 成功創建 ${successCount} 筆預約（${statusText}）`, 'success');
