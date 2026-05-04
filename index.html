@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>卡雅音樂教室 - 預約管理系統 (精確金額版)</title>
+  <title>卡雅音樂教室 - 預約管理系統</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://www.gstatic.com/firebasejs/9.1.3/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.1.3/firebase-database-compat.js"></script>
@@ -15,11 +15,13 @@
     .calendar-day.red-circle::before { content: ''; position: absolute; width: 32px; height: 32px; border: 2px solid #DC2626; border-radius: 50%; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 1; }
     .calendar-day.selected { background: linear-gradient(135deg, #EC4899 0%, #DB2777 100%); color: white; transform: scale(1.1); z-index: 5; }
     .calendar-day.disabled { opacity: 0.35; cursor: not-allowed; }
-    .room-card { border: 2px solid #F9A8D4; border-radius: 8px; padding: 10px; cursor: pointer; background: white; text-align: center; min-width: 80px; }
+    .room-card { border: 2px solid #F9A8D4; border-radius: 8px; padding: 10px; cursor: pointer; background: white; text-align: center; min-width: 80px; transition: all 0.2s; }
     .room-card.active { background: linear-gradient(135deg, #EC4899 0%, #DB2777 100%); color: white; border-color: #BE185D; }
-    .btn-primary { background: linear-gradient(135deg, #10B981 0%, #059669 100%); color: white; padding: 12px; border-radius: 10px; font-weight: 700; cursor: pointer; }
-    .btn-secondary { background: linear-gradient(135deg, #3B82F6 0%, #2563EB 100%); color: white; padding: 12px; border-radius: 10px; font-weight: 700; cursor: pointer; }
-    .input-pink { border: 2px solid #F9A8D4; border-radius: 8px; padding: 10px; width: 100%; font-weight: 600; }
+    .btn-primary { background: linear-gradient(135deg, #10B981 0%, #059669 100%); color: white; padding: 12px; border-radius: 10px; font-weight: 700; cursor: pointer; border: none; }
+    .btn-secondary { background: linear-gradient(135deg, #3B82F6 0%, #2563EB 100%); color: white; padding: 12px; border-radius: 10px; font-weight: 700; cursor: pointer; border: none; }
+    .btn-edit { background: linear-gradient(135deg, #F59E0B 0%, #D97706 100%); color: white; padding: 4px 10px; border-radius: 6px; font-size: 11px; font-weight: bold; border: none; }
+    .input-pink { border: 2px solid #F9A8D4; border-radius: 8px; padding: 10px; width: 100%; font-weight: 600; outline: none; }
+    .input-pink:focus { border-color: #EC4899; box-shadow: 0 0 0 3px rgba(236,72,153,0.1); }
     .status-badge { padding: 4px 10px; border-radius: 6px; font-size: 11px; font-weight: 700; color: white; }
     .status-paid { background: #10B981; }
     .status-pending { background: #F59E0B; }
@@ -27,7 +29,6 @@
     .rule-alert { background: #FEE2E2; border: 2px solid #EF4444; color: #B91C1C; padding: 10px; border-radius: 8px; font-weight: bold; font-size: 13px; text-align: center; }
     .holiday-badge { position: absolute; top: -2px; left: -2px; background: #DC2626; color: white; font-size: 8px; padding: 1px 4px; border-radius: 4px; z-index: 4; }
     .stat-card { background: rgba(255, 255, 255, 0.2); backdrop-filter: blur(8px); padding: 5px 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.3); text-align: center; min-width: 100px; }
-    
     .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 200; display: none; align-items: center; justify-content: center; backdrop-filter: blur(4px); }
     .modal-content { background: white; padding: 25px; border-radius: 20px; width: 95%; max-width: 450px; border: 4px solid #F9A8D4; max-height: 90vh; overflow-y: auto; }
   </style>
@@ -137,6 +138,7 @@
   </div>
 
   <script>
+    // --- Firebase 配置 ---
     const firebaseConfig = {
       apiKey: "AIzaSyDEcKa0OlmdJXowWV-Esr5EAgYoHRMaCfs",
       authDomain: "cms-booking-c8bad.firebaseapp.com",
@@ -249,7 +251,10 @@
     function changeMonth(s) { viewDate.setMonth(viewDate.getMonth() + s); renderCalendar(); }
 
     function calculate() {
-      if (!currentRoom || selectedDates.length === 0) return;
+      if (!currentRoom || selectedDates.length === 0) {
+          document.getElementById('display-total').innerText = "$0.0";
+          return;
+      }
       const [sh, sm] = document.getElementById('start-time').value.split(':').map(Number);
       const [eh, em] = document.getElementById('end-time').value.split(':').map(Number);
       const dur = (eh * 60 + em) - (sh * 60 + sm);
@@ -265,26 +270,42 @@
       document.getElementById('display-total').innerText = `$${total.toFixed(1)}`;
     }
 
+    // --- 關鍵修正：handleBooking 不再 reload ---
     async function handleBooking() {
       const name = document.getElementById('user-name').value, phone = document.getElementById('user-phone').value;
       const start = document.getElementById('start-time').value, end = document.getElementById('end-time').value;
+      
       if (!currentRoom || selectedDates.length === 0 || !name || !phone) return alert('⚠️ 資料未填寫完整');
+      
       if (!isStaff) {
         const limit = new Date(new Date().getTime() + (24 * 60 * 60 * 1000));
         for (let d of selectedDates) { if (new Date(`${d}T${start}`) < limit) return alert('❌ 網上不接受少於 24 小時預約'); }
       }
+      
       const totalText = document.getElementById('display-total').innerText;
       if (totalText.includes('小時')) return alert('⚠️ 時間長度錯誤');
       const totalNum = parseFloat(totalText.replace('$',''));
+
       for (let d of selectedDates) {
         await bookingsRef.push({
           room_id: currentRoom.id, start_date: d, start_time: start, end_time: end,
           user_name: name, phone: phone, total_amount: parseFloat((totalNum/selectedDates.length).toFixed(1)),
-          payment_status: isStaff ? 'paid' : 'pending', created_at: new Date().toISOString(), notes: ""
+          payment_status: isStaff ? 'paid' : 'pending', created_at: new Date().toISOString(), notes: isStaff ? "管理員直接登記" : "網上預約"
         });
       }
+
       try { fetch(EMAIL_API, { method: 'POST', mode: 'no-cors', body: JSON.stringify({ user_name: name, phone: phone, room: currentRoom.name, dates: selectedDates.join(','), time: `${start}-${end}`, price: totalText }) }); } catch(e) {}
-      alert('✅ 預約提交成功！'); location.reload();
+      
+      alert('✅ 預約提交成功！');
+
+      // 重設表單而不是 reload
+      selectedDates = [];
+      document.getElementById('user-name').value = '';
+      document.getElementById('user-phone').value = '';
+      document.getElementById('has-video').checked = false;
+      updateDateList();
+      renderCalendar();
+      calculate();
     }
 
     function updateIncome() {
@@ -336,7 +357,10 @@
       document.getElementById('edit-notes').value = b.notes || "";
       document.getElementById('edit-modal').style.display = 'flex';
     };
+    
     window.closeEditModal = () => document.getElementById('edit-modal').style.display = 'none';
+    
+    // --- 關鍵修正：saveEdit 不再 reload ---
     window.saveEdit = async () => {
       const id = document.getElementById('edit-id').value;
       await db.ref('bookings/' + id).update({
@@ -345,8 +369,11 @@
         total_amount: parseFloat(parseFloat(document.getElementById('edit-amount').value).toFixed(1)),
         notes: document.getElementById('edit-notes').value
       });
-      closeEditModal(); alert('✅ 資料已更新');
+      closeEditModal();
+      alert('✅ 資料已更新');
+      // Firebase 的 on('value') 會自動幫我們刷新清單，所以不需要 reload
     };
+
     window.confirmPay = id => db.ref('bookings/'+id).update({ payment_status: 'paid' });
     window.delRecord = id => confirm('確定刪除？') && db.ref('bookings/'+id).remove();
   </script>
