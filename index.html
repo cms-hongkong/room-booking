@@ -3,141 +3,133 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>卡雅音樂教室 - 雲端預約管理系統</title>
+  <title>卡雅音樂教室 - 雲端管理系統 (完整功能版)</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://www.gstatic.com/firebasejs/9.1.3/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.1.3/firebase-database-compat.js"></script>
   
   <style>
     body { box-sizing: border-box; font-family: 'Microsoft JhengHei', sans-serif; }
-    .calendar-day { width: 38px; height: 38px; border-radius: 6px; cursor: pointer; transition: all 0.3s ease; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 600; background: white; border: 2px solid #F9A8D4; color: #1a1a1a; position: relative; }
+    .calendar-day { width: 38px; height: 38px; border-radius: 6px; cursor: pointer; transition: all 0.3s; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 600; background: white; border: 2px solid #F9A8D4; color: #1a1a1a; position: relative; }
     .calendar-day.has-booking::after { content: ''; position: absolute; width: 6px; height: 6px; background: #DC2626; border-radius: 50%; top: 3px; right: 3px; z-index: 3; }
     .calendar-day.red-circle::before { content: ''; position: absolute; width: 32px; height: 32px; border: 2px solid #DC2626; border-radius: 50%; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 1; }
-    .calendar-day span { position: relative; z-index: 2; }
-    .calendar-day:hover:not(.disabled) { background: #FCE7F3; transform: scale(1.15); z-index: 10; border-color: #EC4899; }
-    .calendar-day.selected { background: linear-gradient(135deg, #EC4899 0%, #DB2777 100%); color: white; transform: scale(1.1); border-color: #BE185D; }
-    .calendar-day.today { border: 3px solid #F59E0B; font-weight: 700; }
-    .calendar-day.disabled { color: #D1D5DB; cursor: not-allowed; opacity: 0.35; border-color: #E5E7EB; }
-    .room-card { border: 2px solid #F9A8D4; border-radius: 8px; padding: 10px 20px; cursor: pointer; transition: all 0.3s; background: white; text-align: center; font-size: 14px; }
-    .room-card.active { background: linear-gradient(135deg, #EC4899 0%, #DB2777 100%); color: white; border-color: #BE185D; }
-    .btn-primary { background: linear-gradient(135deg, #10B981 0%, #059669 100%); color: white; padding: 12px 24px; border-radius: 10px; font-weight: 700; transition: all 0.3s; border: none; cursor: pointer; }
-    .btn-secondary { background: linear-gradient(135deg, #3B82F6 0%, #2563EB 100%); color: white; padding: 12px 24px; border-radius: 10px; font-weight: 700; transition: all 0.3s; border: none; cursor: pointer; }
-    .input-pink { border: 2px solid #F9A8D4; border-radius: 8px; padding: 10px 14px; transition: all 0.3s; width: 100%; }
-    .status-badge { padding: 4px 10px; border-radius: 6px; font-size: 11px; font-weight: 700; color: white; display: inline-block; }
-    .status-paid { background: linear-gradient(135deg, #10B981 0%, #059669 100%); }
-    .status-pending { background: linear-gradient(135deg, #F59E0B 0%, #D97706 100%); }
-    .booking-card { border: 2px solid #F9A8D4; background: white; border-radius: 10px; padding: 12px; margin-bottom: 12px; }
+    .calendar-day.selected { background: linear-gradient(135deg, #EC4899 0%, #DB2777 100%); color: white; transform: scale(1.1); }
+    .calendar-day.disabled { opacity: 0.35; cursor: not-allowed; }
+    .room-card { border: 2px solid #F9A8D4; border-radius: 8px; padding: 10px 15px; cursor: pointer; background: white; text-align: center; }
+    .room-card.active { background: linear-gradient(135deg, #EC4899 0%, #DB2777 100%); color: white; }
+    .btn-primary { background: linear-gradient(135deg, #10B981 0%, #059669 100%); color: white; padding: 12px; border-radius: 10px; font-weight: 700; cursor: pointer; }
+    .btn-secondary { background: linear-gradient(135deg, #3B82F6 0%, #2563EB 100%); color: white; padding: 12px; border-radius: 10px; font-weight: 700; cursor: pointer; }
+    .btn-edit { background: linear-gradient(135deg, #F59E0B 0%, #D97706 100%); color: white; padding: 4px 10px; border-radius: 6px; font-size: 11px; font-weight: bold; }
+    .input-pink { border: 2px solid #F9A8D4; border-radius: 8px; padding: 10px; width: 100%; font-weight: 600; }
+    .status-badge { padding: 4px 10px; border-radius: 6px; font-size: 11px; font-weight: 700; color: white; }
+    .status-paid { background: #10B981; }
+    .status-pending { background: #F59E0B; }
+    .booking-card { border: 2px solid #F9A8D4; background: white; border-radius: 10px; padding: 12px; }
+    .rule-alert { background: #FEE2E2; border: 2px solid #EF4444; color: #B91C1C; padding: 10px; border-radius: 8px; font-weight: bold; font-size: 13px; text-align: center; }
     .holiday-badge { position: absolute; top: -2px; left: -2px; background: #DC2626; color: white; font-size: 8px; padding: 1px 4px; border-radius: 4px; z-index: 4; }
-    .price-display { background: linear-gradient(135deg, #FEF3C7 0%, #FDE68A 100%); border: 3px solid #F59E0B; border-radius: 12px; padding: 20px; }
-    .rule-alert { background: #FEE2E2; border: 2px solid #EF4444; color: #B91C1C; padding: 10px; border-radius: 8px; font-weight: bold; font-size: 14px; text-align: center; }
+    
+    /* 彈出視窗樣式 */
+    .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 200; display: none; align-items: center; justify-content: center; backdrop-filter: blur(4px); }
+    .modal-content { background: white; padding: 25px; border-radius: 20px; width: 90%; max-width: 500px; border: 4px solid #F9A8D4; }
   </style>
 </head>
 <body class="h-full bg-pink-50">
 
+  <div id="edit-modal" class="modal-overlay">
+    <div class="modal-content">
+      <h3 class="text-xl font-bold text-pink-900 mb-4">✏️ 修改預約資料</h3>
+      <div class="space-y-4">
+        <input type="hidden" id="edit-id">
+        <div><label class="text-xs font-bold text-gray-500">預約人姓名</label><input type="text" id="edit-name" class="input-pink"></div>
+        <div><label class="text-xs font-bold text-gray-500">WhatsApp 電話</label><input type="tel" id="edit-phone" class="input-pink"></div>
+        <div class="grid grid-cols-2 gap-4">
+          <div><label class="text-xs font-bold text-gray-500">開始時間</label><select id="edit-start" class="input-pink"></select></div>
+          <div><label class="text-xs font-bold text-gray-500">結束時間</label><select id="edit-end" class="input-pink"></select></div>
+        </div>
+        <div><label class="text-xs font-bold text-gray-500">金額 ($)</label><input type="number" id="edit-amount" class="input-pink"></div>
+        <div><label class="text-xs font-bold text-gray-500">備註</label><textarea id="edit-notes" class="input-pink" rows="2"></textarea></div>
+        <div class="flex gap-3 pt-2">
+          <button onclick="saveEdit()" class="btn-primary flex-1">✅ 儲存修改</button>
+          <button onclick="closeEditModal()" class="bg-gray-400 text-white px-4 py-2 rounded-lg font-bold">取消</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <div id="login-overlay" class="fixed inset-0 bg-pink-100 z-50 flex items-center justify-center p-4">
     <div class="bg-white p-8 rounded-2xl shadow-2xl border-4 border-pink-300 max-w-sm w-full">
       <h2 class="text-2xl font-bold text-pink-900 mb-6 text-center">🎵 卡雅音樂教室</h2>
-      <p class="text-pink-700 mb-6 text-center text-sm">歡迎使用房間預約系統</p>
-      <button onclick="enterMode('public')" class="btn-secondary w-full mb-4 py-4 text-lg">🌐 公開預約系統</button>
-      <div class="text-center text-gray-400 text-xs mb-4">--- 或者管理員登入 ---</div>
+      <button onclick="enterMode('public')" class="btn-secondary w-full mb-4 py-3 text-lg">🌐 公開預約系統</button>
+      <div class="border-t border-gray-200 my-4"></div>
       <input type="password" id="staff-pw" class="input-pink mb-4" placeholder="輸入管理密碼">
-      <button onclick="enterMode('staff')" class="btn-primary w-full py-4 text-lg">👨‍💼 工作人員登入</button>
+      <button onclick="enterMode('staff')" class="btn-primary w-full py-3 text-lg">👨‍💼 工作人員登入</button>
     </div>
   </div>
 
   <div id="app-content" class="h-full flex flex-col overflow-hidden" style="display: none;">
-    <header class="bg-gradient-to-r from-pink-600 to-pink-700 text-white px-8 py-4 shadow-xl flex justify-between items-center border-b-4 border-pink-800">
-      <div class="flex items-center gap-4">
-        <span class="text-4xl">🎵</span>
-        <div>
-          <h1 class="text-2xl font-bold">卡雅音樂教室</h1>
-          <p class="text-xs opacity-90">📍 香港上水符興街43-45號1B室 | 📞 5400 1874</p>
-        </div>
+    <header class="bg-pink-600 text-white px-6 py-3 shadow-lg flex justify-between items-center">
+      <div class="flex items-center gap-3">
+        <span class="text-3xl">🎵</span>
+        <div><h1 class="font-bold text-lg">卡雅音樂教室</h1><p class="text-[10px]">上水符興街43-45號1B室 | 📞 5400 1874</p></div>
       </div>
-      <div class="flex items-center gap-6">
-        <div id="staff-stats" class="hidden flex gap-4">
-          <div class="bg-white/20 p-2 rounded text-center min-w-[100px]">
-            <p class="text-[10px] font-bold">本月收入</p>
-            <p id="month-income" class="text-lg font-bold">$0</p>
-          </div>
-        </div>
-        <button onclick="location.reload()" class="bg-pink-900 px-4 py-2 rounded-lg text-sm font-bold hover:bg-black transition">登出</button>
+      <div class="flex items-center gap-4">
+        <div id="staff-stats" class="hidden text-right"><p class="text-[10px]">本月收入</p><p id="month-income" class="font-bold text-lg">$0</p></div>
+        <button onclick="location.reload()" class="bg-pink-800 px-3 py-1 rounded text-xs">登出</button>
       </div>
     </header>
 
     <main class="flex-1 flex overflow-hidden">
-      <section class="flex-1 overflow-y-auto p-6 space-y-6 bg-white" id="booking-section">
-        <div class="rounded-xl border-2 border-pink-200 p-5 shadow-sm">
-          <h3 class="text-lg font-bold text-pink-900 mb-4 flex items-center gap-2">🎹 1. 選擇房間</h3>
+      <section class="flex-1 overflow-y-auto p-6 space-y-6 bg-white">
+        <div class="border-2 border-pink-100 p-5 rounded-xl shadow-sm">
+          <h3 class="font-bold text-pink-900 mb-3">🎹 1. 選擇房間</h3>
           <div class="flex flex-wrap gap-2" id="room-grid"></div>
-          <div id="room-info-box" class="mt-4 p-4 bg-pink-50 rounded-lg border border-pink-200 hidden text-sm text-pink-800 font-semibold space-y-1"></div>
         </div>
 
-        <div class="rounded-xl border-2 border-pink-200 p-5 shadow-sm">
-          <div class="flex justify-between items-center mb-4">
-            <h3 class="text-lg font-bold text-pink-900">📅 2. 選擇日期</h3>
-            <div class="flex gap-2">
-              <button onclick="changeMonth(-1)" class="px-3 py-1 border border-pink-300 rounded text-pink-600 font-bold">上月</button>
-              <button onclick="changeMonth(1)" class="px-3 py-1 border border-pink-300 rounded text-pink-600 font-bold">下月</button>
+        <div class="border-2 border-pink-100 p-5 rounded-xl shadow-sm">
+          <div class="flex justify-between items-center mb-3">
+            <h3 class="font-bold text-pink-900">📅 2. 選擇日期</h3>
+            <div class="flex gap-2 text-xs">
+              <button onclick="changeMonth(-1)" class="text-pink-600 border border-pink-300 px-2 py-1 rounded">上月</button>
+              <button onclick="changeMonth(1)" class="text-pink-600 border border-pink-300 px-2 py-1 rounded">下月</button>
             </div>
           </div>
-          <div class="bg-pink-50 p-4 rounded-xl border border-pink-200">
-            <h4 id="calendar-month-title" class="text-center font-bold text-pink-900 mb-4"></h4>
-            <div class="grid grid-cols-7 gap-1 text-center text-xs font-bold mb-2">
-              <div class="text-red-600">日</div><div>一</div><div>二</div><div>三</div><div>四</div><div>五</div><div class="text-blue-600">六</div>
-            </div>
-            <div id="calendar-grid" class="grid grid-cols-7 gap-1"></div>
+          <div id="calendar-month-title" class="text-center font-bold text-sm text-pink-700 mb-2"></div>
+          <div class="grid grid-cols-7 gap-1 text-center text-[10px] font-bold mb-1">
+            <div class="text-red-500">日</div><div>一</div><div>二</div><div>三</div><div>四</div><div>五</div><div class="text-blue-500">六</div>
           </div>
-          <div class="mt-4 flex flex-wrap gap-2" id="selected-dates-list"></div>
+          <div id="calendar-grid" class="grid grid-cols-7 gap-1"></div>
+          <div id="selected-dates-list" class="mt-3 flex flex-wrap gap-1"></div>
         </div>
 
-        <div class="rounded-xl border-2 border-pink-200 p-5 shadow-sm space-y-4">
-          <h3 class="text-lg font-bold text-pink-900">⏰ 3. 預約時段與詳情</h3>
-          
-          <div class="rule-alert">⚠️ 注意：網上預約不接受少於24小時的預約。</div>
-
+        <div class="border-2 border-pink-100 p-5 rounded-xl shadow-sm space-y-4">
+          <h3 class="font-bold text-pink-900">⏰ 3. 時段與詳情</h3>
+          <div class="rule-alert">⚠️ 網上預約不接受少於24小時的預約</div>
           <div class="grid grid-cols-2 gap-4">
-            <div>
-              <label class="block text-xs font-bold mb-1">開始時間</label>
-              <select id="start-time" class="select-pink" onchange="calculate()"></select>
-            </div>
-            <div>
-              <label class="block text-xs font-bold mb-1">結束時間</label>
-              <select id="end-time" class="select-pink" onchange="calculate()"></select>
-            </div>
+            <select id="start-time" class="input-pink" onchange="calculate()"></select>
+            <select id="end-time" class="input-pink" onchange="calculate()"></select>
           </div>
-
           <div class="grid grid-cols-2 gap-4">
-            <input type="text" id="user-name" placeholder="👤 預約人姓名" class="input-pink">
-            <input type="tel" id="user-phone" placeholder="📱 WhatsApp 號碼" class="input-pink">
+            <input type="text" id="user-name" placeholder="預約人姓名" class="input-pink">
+            <input type="tel" id="user-phone" placeholder="WhatsApp 電話" class="input-pink">
           </div>
-
-          <div id="video-option" class="hidden p-3 bg-amber-50 rounded border border-amber-200">
-            <label class="flex items-center gap-2 cursor-pointer font-bold text-amber-800">
-              <input type="checkbox" id="has-video" onchange="calculate()"> 📹 加購錄影服務
-            </label>
+          <div id="video-option" class="hidden"><label class="flex items-center gap-2 font-bold text-amber-700"><input type="checkbox" id="has-video" onchange="calculate()"> 📹 加購錄影服務</label></div>
+          <div class="bg-yellow-50 p-4 rounded-lg text-center border border-yellow-200">
+            <p class="text-xs font-bold text-gray-500">預計費用</p>
+            <p id="display-total" class="text-2xl font-bold text-pink-600">$0</p>
           </div>
-
-          <div class="price-display text-center">
-            <p class="text-sm font-bold text-pink-800 mb-1">預計總費用</p>
-            <p id="display-total" class="text-3xl font-extrabold text-pink-600">$0</p>
-          </div>
-
-          <button id="submit-btn" onclick="handleBooking()" class="btn-primary w-full py-4 text-xl shadow-lg">📝 提交預約申請</button>
+          <button id="submit-btn" onclick="handleBooking()" class="btn-primary w-full text-lg">📝 提交預約申請</button>
         </div>
       </section>
 
-      <aside id="admin-sidebar" class="w-[400px] bg-pink-100 border-l-4 border-pink-300 overflow-y-auto p-4 hidden">
-        <h3 class="font-bold text-pink-900 text-xl mb-4 border-b-2 border-pink-300 pb-2">📋 所有預約紀錄</h3>
-        <div id="booking-list" class="space-y-4"></div>
+      <aside id="admin-sidebar" class="w-[380px] bg-pink-50 border-l-2 border-pink-200 overflow-y-auto p-4 hidden">
+        <h3 class="font-bold text-pink-900 mb-4 border-b border-pink-300 pb-2">📋 預約清單 (雲端同步)</h3>
+        <div id="booking-list" class="space-y-3"></div>
       </aside>
     </main>
   </div>
 
-  <div id="toast" class="fixed bottom-10 left-1/2 -translate-x-1/2 px-6 py-3 rounded-full text-white font-bold shadow-2xl opacity-0 transition-all pointer-events-none z-[100]"></div>
-
   <script>
-    // --- 1. Firebase 配置 (Karen 提供的專屬憑證) ---
+    // --- 1. 配置 (已自動填入 Karen 的憑證) ---
     const firebaseConfig = {
       apiKey: "AIzaSyDEcKa0OlmdJXowWV-Esr5EAgYoHRMaCfs",
       authDomain: "cms-booking-c8bad.firebaseapp.com",
@@ -153,18 +145,17 @@
     const bookingsRef = db.ref('bookings');
     const EMAIL_API = "https://script.google.com/macros/s/AKfycbzvnj29GP2k1dIDI6lMcpNxkg924NCqh99lCHDAs9jli2M8MF9Kxd99gX6V1Mf6j7W2/exec";
 
-    // --- 2. 資料集 ---
     const rooms = [
-      { id: 'A', name: '房A', sub: '(三角琴)', rates: { weekday: 280, weekend: 380 }, vRates: { weekday: 580, weekend: 680 }, hasVideo: true, desc: '約150呎, 2-10人, 手機腳架, 譜架' },
-      { id: 'B', name: '房B', sub: '(直身琴)', rates: { weekday: 60, weekend: 90 }, desc: '約30呎, 2人, 譜架' },
-      { id: 'C', name: '房C', sub: '(數碼琴)', rates: { weekday: 60, weekend: 90 }, desc: '約40呎, 2人, 譜架' },
-      { id: 'D', name: '房D', sub: '(直身琴)', rates: { weekday: 60, weekend: 90 }, desc: '約30呎, 2人, 譜架' },
-      { id: 'E', name: '房E', sub: '(直身琴)', rates: { weekday: 60, weekend: 90 }, desc: '約30呎, 2人, 譜架' },
-      { id: '1', name: '房1', sub: '(活動房)', rates: { weekday: 100, weekend: 150 }, desc: '約70呎, 2-10人, 長桌椅子' },
-      { id: '2', name: '房2', sub: '(伴奏)', rates: { weekday: 80, weekend: 120 }, desc: '約50呎, 2-3人, 譜架' }
+      { id: 'A', name: '房A', sub: '(三角琴)', rates: { weekday: 280, weekend: 380 }, vRates: { weekday: 580, weekend: 680 }, hasVideo: true },
+      { id: 'B', name: '房B', sub: '(直身琴)', rates: { weekday: 60, weekend: 90 } },
+      { id: 'C', name: '房C', sub: '(數碼琴)', rates: { weekday: 60, weekend: 90 } },
+      { id: 'D', name: '房D', sub: '(直身琴)', rates: { weekday: 60, weekend: 90 } },
+      { id: 'E', name: '房E', sub: '(直身琴)', rates: { weekday: 60, weekend: 90 } },
+      { id: '1', name: '房1', sub: '(活動)', rates: { weekday: 100, weekend: 150 } },
+      { id: '2', name: '房2', sub: '(伴奏)', rates: { weekday: 80, weekend: 120 } }
     ];
 
-    const holidays = { '2026-05-01': '勞動節', '2026-05-25': '佛誕', '2026-06-19': '端午節', '2026-07-01': '特區成立紀念日', '2026-10-01': '國慶', '2026-12-25': '聖誕' };
+    const holidays = { '2026-05-01': '勞動節', '2026-05-25': '佛誕', '2026-06-19': '端午節', '2026-07-01': '特區成立', '2026-10-01': '國慶', '2026-12-25': '聖誕' };
 
     let bookings = [];
     let selectedDates = [];
@@ -172,12 +163,11 @@
     let viewDate = new Date();
     let isStaff = false;
 
-    // --- 3. 核心邏輯 ---
+    // --- 2. 初始化 ---
 
     function enterMode(mode) {
       if (mode === 'staff') {
-        const pw = document.getElementById('staff-pw').value;
-        if (pw !== 'kaya2026') return showMsg('❌ 密碼錯誤', 'red');
+        if (document.getElementById('staff-pw').value !== 'kaya2026') return alert('密碼錯誤');
         isStaff = true;
         document.getElementById('admin-sidebar').classList.remove('hidden');
         document.getElementById('staff-stats').classList.remove('hidden');
@@ -189,38 +179,39 @@
     }
 
     function initUI() {
-      // 房間生成
+      // 生成房間
       const grid = document.getElementById('room-grid');
       rooms.forEach(r => {
-        const btn = document.createElement('div');
-        btn.className = 'room-card';
-        btn.innerHTML = `<strong>${r.name}</strong><br><span class="text-[10px]">${r.sub}</span>`;
-        btn.onclick = () => {
+        const div = document.createElement('div');
+        div.className = 'room-card text-xs font-bold';
+        div.innerHTML = `${r.name}<br>${r.sub}`;
+        div.onclick = () => {
           currentRoom = r;
           document.querySelectorAll('.room-card').forEach(el => el.classList.remove('active'));
-          btn.classList.add('active');
-          const info = document.getElementById('room-info-box');
-          info.innerHTML = `📏 ${r.desc}<br>💰 收費: 平日$${r.rates.weekday} / 假日$${r.rates.weekend}`;
-          info.classList.remove('hidden');
+          div.classList.add('active');
           document.getElementById('video-option').style.display = r.hasVideo ? 'block' : 'none';
           calculate();
         };
-        grid.appendChild(btn);
+        grid.appendChild(div);
       });
 
-      // 時間選項
+      // 生成時間選單
       const start = document.getElementById('start-time');
       const end = document.getElementById('end-time');
+      const editS = document.getElementById('edit-start');
+      const editE = document.getElementById('edit-end');
       for (let h = 8; h <= 21; h++) {
         [0, 30].forEach(m => {
           const t = `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}`;
-          start.innerHTML += `<option value="${t}">${t}</option>`;
-          end.innerHTML += `<option value="${t}">${t}</option>`;
+          const opt = `<option value="${t}">${t}</option>`;
+          start.innerHTML += opt; end.innerHTML += opt;
+          editS.innerHTML += opt; editE.innerHTML += opt;
         });
       }
-      end.innerHTML += `<option value="22:00">22:00</option>`;
+      const last = `<option value="22:00">22:00</option>`;
+      end.innerHTML += last; editE.innerHTML += last;
 
-      // 監聽 Firebase
+      // 雲端監聽
       bookingsRef.on('value', snap => {
         const data = snap.val();
         bookings = data ? Object.keys(data).map(k => ({ id: k, ...data[k] })) : [];
@@ -229,65 +220,51 @@
       });
     }
 
+    // --- 3. 核心邏輯 ---
+
     function renderCalendar() {
-      const grid = document.getElementById('calendar-grid');
-      grid.innerHTML = '';
-      const year = viewDate.getFullYear();
-      const month = viewDate.getMonth();
+      const grid = document.getElementById('calendar-grid'); grid.innerHTML = '';
+      const year = viewDate.getFullYear(); const month = viewDate.getMonth();
       document.getElementById('calendar-month-title').innerText = `${year}年 ${month + 1}月`;
-
-      const firstDay = new Date(year, month, 1).getDay();
+      const first = new Date(year, month, 1).getDay();
       const days = new Date(year, month + 1, 0).getDate();
-      const today = new Date();
-      today.setHours(0,0,0,0);
+      const today = new Date(); today.setHours(0,0,0,0);
 
-      for (let i = 0; i < firstDay; i++) grid.appendChild(document.createElement('div'));
+      for (let i = 0; i < first; i++) grid.appendChild(document.createElement('div'));
 
       for (let d = 1; d <= days; d++) {
+        const dStr = `${year}-${(month+1).toString().padStart(2,'0')}-${d.toString().padStart(2,'0')}`;
         const date = new Date(year, month, d);
-        const dateStr = `${year}-${(month+1).toString().padStart(2,'0')}-${d.toString().padStart(2,'0')}`;
         const div = document.createElement('div');
         div.className = 'calendar-day';
-        if (date < today) div.classList.add('disabled');
-        if (holidays[dateStr] || date.getDay() === 0 || date.getDay() === 6) div.classList.add('red-circle');
-        if (bookings.some(b => b.start_date === dateStr && b.room_id === currentRoom?.id)) div.classList.add('has-booking');
-        if (selectedDates.includes(dateStr)) div.classList.add('selected');
-        
+        if (date < today && !isStaff) div.classList.add('disabled');
+        if (holidays[dStr] || date.getDay() === 0 || date.getDay() === 6) div.classList.add('red-circle');
+        if (bookings.some(b => b.start_date === dStr && b.room_id === currentRoom?.id)) div.classList.add('has-booking');
+        if (selectedDates.includes(dStr)) div.classList.add('selected');
         div.innerHTML = `<span>${d}</span>`;
-        if (holidays[dateStr]) div.innerHTML += `<div class="holiday-badge">${holidays[dateStr]}</div>`;
-
+        if (holidays[dStr]) div.innerHTML += `<div class="holiday-badge">${holidays[dStr]}</div>`;
         div.onclick = () => {
           if (date < today && !isStaff) return;
-          if (selectedDates.includes(dateStr)) selectedDates = selectedDates.filter(x => x !== dateStr);
-          else selectedDates.push(dateStr);
-          renderCalendar();
-          updateDateList();
-          calculate();
+          if (selectedDates.includes(dStr)) selectedDates = selectedDates.filter(x => x !== dStr);
+          else selectedDates.push(dStr);
+          renderCalendar(); updateDateList(); calculate();
         };
         grid.appendChild(div);
       }
     }
 
     function updateDateList() {
-      const list = document.getElementById('selected-dates-list');
-      list.innerHTML = selectedDates.map(d => `<span class="bg-pink-600 text-white text-[10px] px-2 py-1 rounded-full font-bold">${d}</span>`).join('');
+      document.getElementById('selected-dates-list').innerHTML = selectedDates.map(d => `<span class="bg-pink-600 text-white text-[10px] px-2 py-1 rounded-full font-bold">${d}</span>`).join('');
     }
 
     function changeMonth(s) { viewDate.setMonth(viewDate.getMonth() + s); renderCalendar(); }
 
     function calculate() {
       if (!currentRoom || selectedDates.length === 0) return;
-      const start = document.getElementById('start-time').value;
-      const end = document.getElementById('end-time').value;
-      const [sh, sm] = start.split(':').map(Number);
-      const [eh, em] = end.split(':').map(Number);
-      const dur = (eh * 60 + em) - (sh * 60 + sm);
-      
-      if (dur < 60) {
-        document.getElementById('display-total').innerText = "最少1小時";
-        return;
-      }
-
+      const s = document.getElementById('start-time').value.split(':').map(Number);
+      const e = document.getElementById('end-time').value.split(':').map(Number);
+      const dur = (e[0]*60 + e[1]) - (s[0]*60 + s[1]);
+      if (dur < 60) { document.getElementById('display-total').innerText = "最少1小時"; return; }
       let total = 0;
       selectedDates.forEach(d => {
         const isHoli = holidays[d] || [0, 6].includes(new Date(d).getDay());
@@ -304,105 +281,98 @@
       const phone = document.getElementById('user-phone').value;
       const start = document.getElementById('start-time').value;
       const end = document.getElementById('end-time').value;
-
-      if (!currentRoom || selectedDates.length === 0 || !name || !phone) return showMsg('⚠️ 請填寫完整資料', 'orange');
-
-      // --- 24小時檢查 (重要新增項目) ---
+      if (!currentRoom || selectedDates.length === 0 || !name || !phone) return alert('請填寫完整');
+      
+      // 24小時檢查
       if (!isStaff) {
         const now = new Date();
-        const limit = new Date(now.getTime() + (24 * 60 * 60 * 1000)); // 現在加24小時
-        
+        const limit = new Date(now.getTime() + (24 * 60 * 60 * 1000));
         for (let d of selectedDates) {
-          const bookingStart = new Date(`${d}T${start}`);
-          if (bookingStart < limit) {
-            return showMsg('❌ 網上預約不接受少於24小時的預約，請致電 5400 1874 查詢。', 'red');
-          }
+          if (new Date(`${d}T${start}`) < limit) return alert('❌ 網上不接受少於24小時的預約，請致電查詢。');
         }
       }
 
-      const total = document.getElementById('display-total').innerText;
-      if (total === "最少1小時") return showMsg('⚠️ 預約時長最少1小時', 'orange');
-
-      showMsg('⏳ 正在處理中...', 'blue');
+      const totalText = document.getElementById('display-total').innerText;
+      if (totalText.includes('小時')) return alert('時長錯誤');
+      
+      const totalNum = parseInt(totalText.replace('$',''));
 
       for (let d of selectedDates) {
-        const data = {
-          room_id: currentRoom.id,
-          start_date: d,
-          start_time: start,
-          end_time: end,
-          user_name: name,
-          phone: phone,
-          total_amount: Math.round(parseInt(total.replace('$','')) / selectedDates.length),
-          payment_status: isStaff ? 'paid' : 'pending',
-          created_at: new Date().toISOString(),
-          notes: "網上預約"
-        };
-        await bookingsRef.push(data);
+        await bookingsRef.push({
+          room_id: currentRoom.id, start_date: d, start_time: start, end_time: end,
+          user_name: name, phone: phone, total_amount: Math.round(totalNum/selectedDates.length),
+          payment_status: isStaff ? 'paid' : 'pending', created_at: new Date().toISOString(), notes: ""
+        });
       }
 
-      // 發送 Email 通知
-      try {
-        fetch(EMAIL_API, {
-          method: 'POST',
-          mode: 'no-cors',
-          body: JSON.stringify({
-            user_name: name,
-            phone: phone,
-            room: currentRoom.name,
-            dates: selectedDates.join(', '),
-            time: `${start}-${end}`,
-            price: total
-          })
-        });
-      } catch(e) {}
+      // 發送 Email
+      fetch(EMAIL_API, { method: 'POST', mode: 'no-cors', body: JSON.stringify({ user_name: name, phone: phone, room: currentRoom.name, dates: selectedDates.join(','), time: `${start}-${end}`, price: totalText }) });
 
-      showMsg('✅ 預約提交成功！請等候 WhatsApp 聯絡。', 'green');
-      setTimeout(() => location.reload(), 2000);
+      alert('預約提交成功！');
+      location.reload();
     }
 
+    // --- 4. 管理員編輯功能 ---
+
     function renderAdminList() {
-      const container = document.getElementById('booking-list');
-      container.innerHTML = '';
-      let income = 0;
-      const nowMonth = new Date().getMonth();
-
+      const container = document.getElementById('booking-list'); container.innerHTML = '';
+      let income = 0; const currentMonth = new Date().getMonth();
       bookings.sort((a,b) => b.start_date.localeCompare(a.start_date)).forEach(b => {
-        const d = new Date(b.start_date);
-        if (b.payment_status === 'paid' && d.getMonth() === nowMonth) income += b.total_amount;
-
-        const card = document.createElement('div');
-        card.className = 'booking-card text-xs';
-        card.innerHTML = `
-          <div class="flex justify-between font-bold mb-2">
+        if (b.payment_status === 'paid' && new Date(b.start_date).getMonth() === currentMonth) income += b.total_amount;
+        const div = document.createElement('div');
+        div.className = 'booking-card text-xs space-y-2';
+        div.innerHTML = `
+          <div class="flex justify-between font-bold">
             <span>房${b.room_id} - ${b.user_name}</span>
-            <span class="status-badge ${b.payment_status === 'paid' ? 'status-paid' : 'status-pending'}">${b.payment_status === 'paid' ? '已付' : '待付'}</span>
+            <span class="status-badge ${b.payment_status==='paid'?'status-paid':'status-pending'}">${b.payment_status==='paid'?'已付':'待付'}</span>
           </div>
-          <div class="space-y-1 opacity-80">
-            <p>📅 ${b.start_date} (${b.start_time}-${b.end_time})</p>
-            <p>📱 ${b.phone} | 💰 $${b.total_amount}</p>
-          </div>
-          <div class="mt-3 flex gap-2">
-            ${b.payment_status === 'pending' ? `<button onclick="setPaid('${b.id}')" class="bg-green-600 text-white px-3 py-1 rounded font-bold">確認收款</button>` : ''}
-            <button onclick="removeBooking('${b.id}')" class="bg-gray-400 text-white px-3 py-1 rounded font-bold">刪除</button>
+          <p>📅 ${b.start_date} | ⏰ ${b.start_time}-${b.end_time}</p>
+          <p>📱 ${b.phone} | 💰 $${b.total_amount}</p>
+          ${b.notes ? `<p class="text-gray-500 font-bold">📝 ${b.notes}</p>` : ''}
+          <div class="flex gap-2 pt-1">
+            ${b.payment_status==='pending'?`<button onclick="setPaid('${b.id}')" class="bg-green-500 text-white px-2 py-1 rounded">收錢</button>`:''}
+            <button onclick="openEditModal('${b.id}')" class="btn-edit">✏️ 編輯</button>
+            <button onclick="delBooking('${b.id}')" class="bg-gray-400 text-white px-2 py-1 rounded">刪除</button>
           </div>
         `;
-        container.appendChild(card);
+        container.appendChild(div);
       });
       document.getElementById('month-income').innerText = `$${Math.round(income)}`;
     }
 
-    window.setPaid = id => db.ref('bookings/'+id).update({ payment_status: 'paid' });
-    window.removeBooking = id => confirm('確定刪除此預約？') && db.ref('bookings/'+id).remove();
+    // 編輯 Modal 邏輯
+    window.openEditModal = (id) => {
+      const b = bookings.find(x => x.id === id);
+      if (!b) return;
+      document.getElementById('edit-id').value = id;
+      document.getElementById('edit-name').value = b.user_name;
+      document.getElementById('edit-phone').value = b.phone;
+      document.getElementById('edit-start').value = b.start_time;
+      document.getElementById('edit-end').value = b.end_time;
+      document.getElementById('edit-amount').value = b.total_amount;
+      document.getElementById('edit-notes').value = b.notes || "";
+      document.getElementById('edit-modal').style.display = 'flex';
+    };
 
-    function showMsg(m, color) {
-      const t = document.getElementById('toast');
-      const bg = color === 'red' ? '#EF4444' : color === 'green' ? '#10B981' : color === 'orange' ? '#F59E0B' : '#3B82F6';
-      t.innerText = m;
-      t.style.background = bg;
-      t.style.opacity = '1';
-      setTimeout(() => t.style.opacity = '0', 3500);
-    }
+    window.closeEditModal = () => document.getElementById('edit-modal').style.display = 'none';
+
+    window.saveEdit = async () => {
+      const id = document.getElementById('edit-id').value;
+      const updateData = {
+        user_name: document.getElementById('edit-name').value,
+        phone: document.getElementById('edit-phone').value,
+        start_time: document.getElementById('edit-start').value,
+        end_time: document.getElementById('edit-end').value,
+        total_amount: parseInt(document.getElementById('edit-amount').value),
+        notes: document.getElementById('edit-notes').value
+      };
+      await db.ref('bookings/' + id).update(updateData);
+      alert('已成功修改資料！');
+      closeEditModal();
+    };
+
+    window.setPaid = id => db.ref('bookings/'+id).update({ payment_status: 'paid' });
+    window.delBooking = id => confirm('確定永久刪除此紀錄？') && db.ref('bookings/'+id).remove();
 
   </script>
 </body>
