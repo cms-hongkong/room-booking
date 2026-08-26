@@ -1,4 +1,4 @@
-<!doctype html>
+l<!doctype html>
 <html lang="zh-TW" class="h-full">
 <head>
   <meta charset="UTF-8">
@@ -270,42 +270,69 @@
       document.getElementById('display-total').innerText = `$${total.toFixed(1)}`;
     }
 
-    // --- 關鍵修正：handleBooking 不再 reload ---
+    // 關鍵修復：加入 try...catch 與修復日期格式問題
     async function handleBooking() {
-      const name = document.getElementById('user-name').value, phone = document.getElementById('user-phone').value;
-      const start = document.getElementById('start-time').value, end = document.getElementById('end-time').value;
-      
-      if (!currentRoom || selectedDates.length === 0 || !name || !phone) return alert('⚠️ 資料未填寫完整');
-      
-      if (!isStaff) {
-        const limit = new Date(new Date().getTime() + (24 * 60 * 60 * 1000));
-        for (let d of selectedDates) { if (new Date(`${d}T${start}`) < limit) return alert('❌ 網上不接受少於 24 小時預約'); }
+      try {
+        const name = document.getElementById('user-name').value;
+        const phone = document.getElementById('user-phone').value;
+        const start = document.getElementById('start-time').value;
+        const end = document.getElementById('end-time').value;
+        
+        if (!currentRoom || selectedDates.length === 0 || !name || !phone) {
+          return alert('⚠️ 資料未填寫完整');
+        }
+        
+        if (!isStaff) {
+          const limit = new Date(new Date().getTime() + (24 * 60 * 60 * 1000));
+          for (let d of selectedDates) { 
+            // 修正：加入 :00 (秒數)，避免 iOS Safari 出現 Invalid Date 錯誤
+            const checkDate = new Date(`${d}T${start}:00`);
+            if (checkDate < limit) return alert('❌ 網上不接受少於 24 小時預約'); 
+          }
+        }
+        
+        const totalText = document.getElementById('display-total').innerText;
+        if (totalText.includes('小時')) return alert('⚠️ 時間長度錯誤');
+        const totalNum = parseFloat(totalText.replace('$',''));
+
+        for (let d of selectedDates) {
+          await bookingsRef.push({
+            room_id: currentRoom.id, 
+            start_date: d, 
+            start_time: start, 
+            end_time: end,
+            user_name: name, 
+            phone: phone, 
+            total_amount: parseFloat((totalNum/selectedDates.length).toFixed(1)),
+            payment_status: isStaff ? 'paid' : 'pending', 
+            created_at: new Date().toISOString(), 
+            notes: isStaff ? "管理員直接登記" : "網上預約"
+          });
+        }
+
+        try { 
+          fetch(EMAIL_API, { 
+            method: 'POST', 
+            mode: 'no-cors', 
+            body: JSON.stringify({ user_name: name, phone: phone, room: currentRoom.name, dates: selectedDates.join(','), time: `${start}-${end}`, price: totalText }) 
+          }); 
+        } catch(e) { console.log(e); }
+        
+        alert('✅ 預約提交成功！');
+
+        // 重設表單
+        selectedDates = [];
+        document.getElementById('user-name').value = '';
+        document.getElementById('user-phone').value = '';
+        document.getElementById('has-video').checked = false;
+        updateDateList();
+        renderCalendar();
+        calculate();
+
+      } catch (error) {
+        console.error("Booking Error:", error);
+        alert('❌ 預約失敗！請檢查資料庫權限或網絡連線。\n錯誤訊息：' + error.message);
       }
-      
-      const totalText = document.getElementById('display-total').innerText;
-      if (totalText.includes('小時')) return alert('⚠️ 時間長度錯誤');
-      const totalNum = parseFloat(totalText.replace('$',''));
-
-      for (let d of selectedDates) {
-        await bookingsRef.push({
-          room_id: currentRoom.id, start_date: d, start_time: start, end_time: end,
-          user_name: name, phone: phone, total_amount: parseFloat((totalNum/selectedDates.length).toFixed(1)),
-          payment_status: isStaff ? 'paid' : 'pending', created_at: new Date().toISOString(), notes: isStaff ? "管理員直接登記" : "網上預約"
-        });
-      }
-
-      try { fetch(EMAIL_API, { method: 'POST', mode: 'no-cors', body: JSON.stringify({ user_name: name, phone: phone, room: currentRoom.name, dates: selectedDates.join(','), time: `${start}-${end}`, price: totalText }) }); } catch(e) {}
-      
-      alert('✅ 預約提交成功！');
-
-      // 重設表單而不是 reload
-      selectedDates = [];
-      document.getElementById('user-name').value = '';
-      document.getElementById('user-phone').value = '';
-      document.getElementById('has-video').checked = false;
-      updateDateList();
-      renderCalendar();
-      calculate();
     }
 
     function updateIncome() {
@@ -360,7 +387,6 @@
     
     window.closeEditModal = () => document.getElementById('edit-modal').style.display = 'none';
     
-    // --- 關鍵修正：saveEdit 不再 reload ---
     window.saveEdit = async () => {
       const id = document.getElementById('edit-id').value;
       await db.ref('bookings/' + id).update({
@@ -371,7 +397,6 @@
       });
       closeEditModal();
       alert('✅ 資料已更新');
-      // Firebase 的 on('value') 會自動幫我們刷新清單，所以不需要 reload
     };
 
     window.confirmPay = id => db.ref('bookings/'+id).update({ payment_status: 'paid' });
