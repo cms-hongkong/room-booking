@@ -5,7 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>卡雅音樂教室 - 預約管理系統</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <!-- 保持使用舊版 Compat SDK 確保與你的代碼兼容 -->
   <script src="https://www.gstatic.com/firebasejs/9.1.3/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.1.3/firebase-database-compat.js"></script>
   
@@ -139,11 +138,10 @@
   </div>
 
   <script>
-    // --- 替換為你最新的 Firebase 配置 ---
+    // --- 最終完整 Firebase 配置 ---
     const firebaseConfig = {
       apiKey: "AIzaSyBmuc1iSW9FSXXvdVUsIhBc8YoOXHy2Gmo",
       authDomain: "cms-booking-system.firebaseapp.com",
-      // 👇 如果等陣發現權限錯誤，可以試下將下面條 link 入面嘅 asia-southeast1 改做 firebaseio.com
       databaseURL: "https://cms-booking-system-default-rtdb.asia-southeast1.firebasedatabase.app",
       projectId: "cms-booking-system",
       storageBucket: "cms-booking-system.firebasestorage.app",
@@ -151,7 +149,6 @@
       appId: "1:979024109328:web:62c3f065666a5ec1c6cf95"
     };
 
-    // 初始化 Firebase
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database(), bookingsRef = db.ref('bookings');
     const EMAIL_API = "https://script.google.com/macros/s/AKfycbzvnj29GP2k1dIDI6lMcpNxkg924NCqh99lCHDAs9jli2M8MF9Kxd99gX6V1Mf6j7W2/exec";
@@ -273,7 +270,6 @@
       document.getElementById('display-total').innerText = `$${total.toFixed(1)}`;
     }
 
-    // 關鍵修復：加入 try...catch 與修復日期格式問題
     async function handleBooking() {
       try {
         const name = document.getElementById('user-name').value;
@@ -332,7 +328,7 @@
 
       } catch (error) {
         console.error("Booking Error:", error);
-        alert('❌ 預約失敗！請檢查資料庫權限或網絡連線。\n錯誤訊息：' + error.message + '\n\n【提示】請確保你已經去 Firebase 後台開啟咗 Realtime Database，並且將 Rules 設定為 true！');
+        alert('❌ 預約失敗！請檢查資料庫權限或網絡連線。\n錯誤訊息：' + error.message);
       }
     }
 
