@@ -138,7 +138,6 @@
   </div>
 
   <script>
-    // --- 最終完整 Firebase 配置 ---
     const firebaseConfig = {
       apiKey: "AIzaSyBmuc1iSW9FSXXvdVUsIhBc8YoOXHy2Gmo",
       authDomain: "cms-booking-system.firebaseapp.com",
@@ -153,14 +152,15 @@
     const db = firebase.database(), bookingsRef = db.ref('bookings');
     const EMAIL_API = "https://script.google.com/macros/s/AKfycbzvnj29GP2k1dIDI6lMcpNxkg924NCqh99lCHDAs9jli2M8MF9Kxd99gX6V1Mf6j7W2/exec";
 
+    // 🌟 更新房間價錢及簡介
     const rooms = [
-      { id: 'A', name: '房A', sub: '(三角琴)', rates: { weekday: 280, weekend: 380 }, vRates: { weekday: 580, weekend: 680 }, hasVideo: true, info: '約150呎, 2-10人' },
-      { id: 'B', name: '房B', sub: '(直身琴)', rates: { weekday: 60, weekend: 90 }, info: '約30呎, 2人' },
-      { id: 'C', name: '房C', sub: '(數碼琴)', rates: { weekday: 60, weekend: 90 }, info: '約40呎, 2人' },
-      { id: 'D', name: '房D', sub: '(直身琴)', rates: { weekday: 60, weekend: 90 }, info: '約30呎, 2人' },
-      { id: 'E', name: '房E', sub: '(直身琴)', rates: { weekday: 60, weekend: 90 }, info: '約30呎, 2人' },
-      { id: '1', name: '房1', sub: '(活動房)', rates: { weekday: 100, weekend: 150 }, info: '約70呎, 2-10人' },
-      { id: '2', name: '房2', sub: '(伴奏)', rates: { weekday: 80, weekend: 120 }, info: '約50呎, 2-3人' }
+      { id: 'A', name: '房A', sub: '(三角琴房)', rates: { normal: 280, holiday: 380 }, vRates: { normal: 580, holiday: 680 }, hasVideo: true, info: '約150呎, 2-10人。另有租房套票，詳情可直接Whatsapp 54001874。' },
+      { id: 'B', name: '房B', sub: '(直身琴房)', rates: { normal: 60, holiday: 80 }, info: '約30呎, 2人。另有租房套票，詳情可直接Whatsapp 54001874。' },
+      { id: 'C', name: '房C', sub: '(直身琴房)', rates: { normal: 60, holiday: 80 }, info: '約40呎, 2人。另有租房套票，詳情可直接Whatsapp 54001874。' },
+      { id: 'D', name: '房D', sub: '(直身琴房)', rates: { normal: 60, holiday: 80 }, info: '約30呎, 2人。另有租房套票，詳情可直接Whatsapp 54001874。' },
+      { id: 'E', name: '房E', sub: '(直身琴房)', rates: { normal: 60, holiday: 80 }, info: '約30呎, 2人。另有租房套票，詳情可直接Whatsapp 54001874。' },
+      { id: '1', name: '房1', sub: '(活動房)', rates: { normal: 150, holiday: 200 }, info: '約70呎, 2-10人。另有租房套票，詳情可直接Whatsapp 54001874。' },
+      { id: '2', name: '房2', sub: '(伴奏房)', rates: { normal: 100, holiday: 130 }, info: '約50呎, 2-3人。另有租房套票，詳情可直接Whatsapp 54001874。' }
     ];
 
     const holidays = { '2026-05-01': '勞動節', '2026-05-25': '佛誕', '2026-06-19': '端午節', '2026-07-01': '特區成立', '2026-10-01': '國慶', '2026-12-25': '聖誕' };
@@ -189,7 +189,8 @@
           currentRoom = r;
           document.querySelectorAll('.room-card').forEach(el => el.classList.remove('active'));
           div.classList.add('active');
-          document.getElementById('room-info-display').innerHTML = `📍 ${r.info} | 💰 收費: 平日$${r.rates.weekday} / 假日$${r.rates.weekend}`;
+          // 🌟 更新顯示字句
+          document.getElementById('room-info-display').innerHTML = `📍 ${r.info} <br>💰 收費: 一至日 $${r.rates.normal} / 公眾假期 $${r.rates.holiday}`;
           document.getElementById('room-info-display').classList.remove('hidden');
           document.getElementById('video-option').style.display = r.hasVideo ? 'block' : 'none';
           calculate();
@@ -229,6 +230,7 @@
         const div = document.createElement('div');
         div.className = 'calendar-day';
         if (date < today && !isStaff) div.classList.add('disabled');
+        // 保持日曆星期六日紅圈不變
         if (holidays[dStr] || date.getDay() === 0 || date.getDay() === 6) div.classList.add('red-circle');
         if (bookings.some(b => b.start_date === dStr && b.room_id === currentRoom?.id)) div.classList.add('has-booking');
         if (selectedDates.includes(dStr)) div.classList.add('selected');
@@ -261,10 +263,13 @@
       if (dur < 60) { document.getElementById('display-total').innerText = "最少1小時"; return; }
       let total = 0;
       selectedDates.forEach(d => {
-        const isHoli = holidays[d] || [0, 6].includes(new Date(d).getDay());
+        // 🌟 修正邏輯：而家只有公眾假期先會收 holiday 價錢，星期六日都係收 normal 價錢
+        const isPublicHoliday = holidays[d];
         const video = document.getElementById('has-video').checked && currentRoom.id === 'A';
-        let rate = isHoli ? currentRoom.rates.weekend : currentRoom.rates.weekday;
-        if (video) rate = isHoli ? currentRoom.vRates.weekend : currentRoom.vRates.weekday;
+        
+        let rate = isPublicHoliday ? currentRoom.rates.holiday : currentRoom.rates.normal;
+        if (video) rate = isPublicHoliday ? currentRoom.vRates.holiday : currentRoom.vRates.normal;
+        
         total += (rate * (dur / 60));
       });
       document.getElementById('display-total').innerText = `$${total.toFixed(1)}`;
