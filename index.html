@@ -1,10 +1,11 @@
-l<!doctype html>
+<!doctype html>
 <html lang="zh-TW" class="h-full">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>卡雅音樂教室 - 預約管理系統</title>
   <script src="https://cdn.tailwindcss.com"></script>
+  <!-- 保持使用舊版 Compat SDK 確保與你的代碼兼容 -->
   <script src="https://www.gstatic.com/firebasejs/9.1.3/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.1.3/firebase-database-compat.js"></script>
   
@@ -138,17 +139,19 @@ l<!doctype html>
   </div>
 
   <script>
-    // --- Firebase 配置 ---
+    // --- 替換為你最新的 Firebase 配置 ---
     const firebaseConfig = {
-      apiKey: "AIzaSyDEcKa0OlmdJXowWV-Esr5EAgYoHRMaCfs",
-      authDomain: "cms-booking-c8bad.firebaseapp.com",
-      databaseURL: "https://cms-booking-c8bad-default-rtdb.asia-southeast1.firebasedatabase.app",
-      projectId: "cms-booking-c8bad",
-      storageBucket: "cms-booking-c8bad.firebasestorage.app",
-      messagingSenderId: "994097211619",
-      appId: "1:994097211619:web:bc1626b253b02381ca3dd6"
+      apiKey: "AIzaSyBmuc1iSW9FSXXvdVUsIhBc8YoOXHy2Gmo",
+      authDomain: "cms-booking-system.firebaseapp.com",
+      // 👇 如果等陣發現權限錯誤，可以試下將下面條 link 入面嘅 asia-southeast1 改做 firebaseio.com
+      databaseURL: "https://cms-booking-system-default-rtdb.asia-southeast1.firebasedatabase.app",
+      projectId: "cms-booking-system",
+      storageBucket: "cms-booking-system.firebasestorage.app",
+      messagingSenderId: "979024109328",
+      appId: "1:979024109328:web:62c3f065666a5ec1c6cf95"
     };
 
+    // 初始化 Firebase
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database(), bookingsRef = db.ref('bookings');
     const EMAIL_API = "https://script.google.com/macros/s/AKfycbzvnj29GP2k1dIDI6lMcpNxkg924NCqh99lCHDAs9jli2M8MF9Kxd99gX6V1Mf6j7W2/exec";
@@ -285,7 +288,6 @@ l<!doctype html>
         if (!isStaff) {
           const limit = new Date(new Date().getTime() + (24 * 60 * 60 * 1000));
           for (let d of selectedDates) { 
-            // 修正：加入 :00 (秒數)，避免 iOS Safari 出現 Invalid Date 錯誤
             const checkDate = new Date(`${d}T${start}:00`);
             if (checkDate < limit) return alert('❌ 網上不接受少於 24 小時預約'); 
           }
@@ -320,7 +322,6 @@ l<!doctype html>
         
         alert('✅ 預約提交成功！');
 
-        // 重設表單
         selectedDates = [];
         document.getElementById('user-name').value = '';
         document.getElementById('user-phone').value = '';
@@ -331,7 +332,7 @@ l<!doctype html>
 
       } catch (error) {
         console.error("Booking Error:", error);
-        alert('❌ 預約失敗！請檢查資料庫權限或網絡連線。\n錯誤訊息：' + error.message);
+        alert('❌ 預約失敗！請檢查資料庫權限或網絡連線。\n錯誤訊息：' + error.message + '\n\n【提示】請確保你已經去 Firebase 後台開啟咗 Realtime Database，並且將 Rules 設定為 true！');
       }
     }
 
