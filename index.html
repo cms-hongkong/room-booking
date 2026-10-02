@@ -31,10 +31,14 @@
     .stat-card { background: rgba(255, 255, 255, 0.2); backdrop-filter: blur(8px); padding: 5px 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.3); text-align: center; min-width: 100px; }
     .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 200; display: none; align-items: center; justify-content: center; backdrop-filter: blur(4px); }
     .modal-content { background: white; padding: 25px; border-radius: 20px; width: 95%; max-width: 450px; border: 4px solid #F9A8D4; max-height: 90vh; overflow-y: auto; }
+    .tab-btn { padding: 6px 12px; border-radius: 8px; font-weight: bold; font-size: 12px; cursor: pointer; transition: all 0.2s; }
+    .tab-btn.active { background: #EC4899; color: white; }
+    .tab-btn.inactive { background: #FCE7F3; color: #BE185D; }
   </style>
 </head>
 <body class="h-full bg-pink-50">
 
+  <!-- 修改資料 Modal -->
   <div id="edit-modal" class="modal-overlay">
     <div class="modal-content">
       <h3 class="text-xl font-bold text-pink-900 mb-4 flex items-center gap-2">✏️ 修改預約詳情</h3>
@@ -56,6 +60,7 @@
     </div>
   </div>
 
+  <!-- 登入頁面 -->
   <div id="login-overlay" class="fixed inset-0 bg-pink-100 z-50 flex items-center justify-center p-4">
     <div class="bg-white p-8 rounded-3xl shadow-2xl border-4 border-pink-300 max-w-sm w-full text-center">
       <span class="text-5xl">🎵</span>
@@ -67,6 +72,7 @@
     </div>
   </div>
 
+  <!-- 主程式區塊 -->
   <div id="app-content" class="h-full flex flex-col overflow-hidden" style="display: none;">
     <header class="bg-pink-600 text-white px-6 py-4 shadow-xl flex justify-between items-center border-b-4 border-pink-800">
       <div class="flex items-center gap-4">
@@ -83,6 +89,7 @@
     </header>
 
     <main class="flex-1 flex overflow-hidden">
+      <!-- 左側預約流程區塊 -->
       <section class="flex-1 overflow-y-auto p-6 space-y-6 bg-white shadow-inner">
         <div class="border-2 border-pink-100 p-6 rounded-2xl">
           <h3 class="font-bold text-pink-900 mb-4 flex items-center gap-2">🎹 1. 選擇房間</h3>
@@ -130,9 +137,39 @@
         </div>
       </section>
 
-      <aside id="admin-sidebar" class="w-[420px] bg-pink-50 border-l-4 border-pink-200 overflow-y-auto p-4 hidden">
-        <h3 class="font-black text-pink-900 mb-4 border-b-2 border-pink-200 pb-2 text-lg">📋 雲端預約清單</h3>
-        <div id="booking-list" class="space-y-4"></div>
+      <!-- 右側管理員面板 -->
+      <aside id="admin-sidebar" class="w-[480px] bg-pink-50 border-l-4 border-pink-200 overflow-y-auto p-4 hidden flex flex-col gap-4">
+        <div class="flex items-center justify-between border-b-2 border-pink-200 pb-2">
+          <h3 class="font-black text-pink-900 text-lg">📋 雲端預約管理</h3>
+          <div class="flex gap-2">
+            <button id="tab-btn-list" onclick="switchAdminTab('list')" class="tab-btn active">預約紀錄</button>
+            <button id="tab-btn-matrix" onclick="switchAdminTab('matrix')" class="tab-btn inactive">房間總覽表</button>
+          </div>
+        </div>
+
+        <!-- 頁籤 1: 預約紀錄列表 (含搜尋) -->
+        <div id="admin-tab-list" class="space-y-3">
+          <div class="relative">
+            <input type="text" id="admin-search" oninput="renderAdminList()" placeholder="🔍 搜尋 WhatsApp 電話或姓名..." class="input-pink text-xs pr-8">
+            <button onclick="clearSearch()" class="absolute right-3 top-2.5 text-gray-400 font-bold text-xs hover:text-pink-600">✕</button>
+          </div>
+          <div id="search-status" class="text-[10px] text-pink-700 font-bold hidden"></div>
+          <div id="booking-list" class="space-y-3"></div>
+        </div>
+
+        <!-- 頁籤 2: 房間每日對照表格 -->
+        <div id="admin-tab-matrix" class="space-y-3 hidden">
+          <div class="flex items-center gap-2 bg-white p-2 rounded-xl border border-pink-200">
+            <label class="text-xs font-bold text-pink-900 shrink-0">選擇日期：</label>
+            <input type="date" id="matrix-date-picker" onchange="renderRoomMatrix()" class="input-pink py-1 text-xs">
+          </div>
+          <div class="text-[11px] font-bold text-gray-500 text-center flex justify-center gap-4">
+            <span class="flex items-center gap-1"><span class="w-3 h-3 bg-green-500 rounded-sm inline-block"></span> 已付款</span>
+            <span class="flex items-center gap-1"><span class="w-3 h-3 bg-amber-500 rounded-sm inline-block"></span> 待付款</span>
+            <span class="flex items-center gap-1"><span class="w-3 h-3 bg-gray-100 border rounded-sm inline-block"></span> 空置</span>
+          </div>
+          <div id="room-matrix-container" class="overflow-x-auto bg-white rounded-xl border border-pink-200 shadow-sm"></div>
+        </div>
       </aside>
     </main>
   </div>
@@ -152,7 +189,6 @@
     const db = firebase.database(), bookingsRef = db.ref('bookings');
     const EMAIL_API = "https://script.google.com/macros/s/AKfycbzvnj29GP2k1dIDI6lMcpNxkg924NCqh99lCHDAs9jli2M8MF9Kxd99gX6V1Mf6j7W2/exec";
 
-    // 🌟 更新房間價錢及簡介
     const rooms = [
       { id: 'A', name: '房A', sub: '(三角琴房)', rates: { normal: 280, holiday: 380 }, vRates: { normal: 580, holiday: 680 }, hasVideo: true, info: '約150呎, 2-10人。另有租房套票，詳情可直接Whatsapp 54001874。' },
       { id: 'B', name: '房B', sub: '(直身琴房)', rates: { normal: 60, holiday: 80 }, info: '約30呎, 2人。另有租房套票，詳情可直接Whatsapp 54001874。' },
@@ -176,11 +212,16 @@
       }
       document.getElementById('login-overlay').style.display = 'none';
       document.getElementById('app-content').style.display = 'flex';
+      
+      // 初始化矩陣視圖的日期為今日
+      const todayStr = new Date().toISOString().split('T')[0];
+      document.getElementById('matrix-date-picker').value = todayStr;
+      
       initUI();
     }
 
     function initUI() {
-      const grid = document.getElementById('room-grid');
+      const grid = document.getElementById('room-grid'); grid.innerHTML = '';
       rooms.forEach(r => {
         const div = document.createElement('div');
         div.className = 'room-card text-xs font-bold';
@@ -189,7 +230,6 @@
           currentRoom = r;
           document.querySelectorAll('.room-card').forEach(el => el.classList.remove('active'));
           div.classList.add('active');
-          // 🌟 更新顯示字句
           document.getElementById('room-info-display').innerHTML = `📍 ${r.info} <br>💰 收費: 一至日 $${r.rates.normal} / 公眾假期 $${r.rates.holiday}`;
           document.getElementById('room-info-display').classList.remove('hidden');
           document.getElementById('video-option').style.display = r.hasVideo ? 'block' : 'none';
@@ -213,7 +253,7 @@
         const data = snap.val();
         bookings = data ? Object.keys(data).map(k => ({ id: k, ...data[k] })) : [];
         renderCalendar();
-        if (isStaff) { renderAdminList(); updateIncome(); }
+        if (isStaff) { renderAdminList(); renderRoomMatrix(); updateIncome(); }
       });
     }
 
@@ -230,7 +270,6 @@
         const div = document.createElement('div');
         div.className = 'calendar-day';
         if (date < today && !isStaff) div.classList.add('disabled');
-        // 保持日曆星期六日紅圈不變
         if (holidays[dStr] || date.getDay() === 0 || date.getDay() === 6) div.classList.add('red-circle');
         if (bookings.some(b => b.start_date === dStr && b.room_id === currentRoom?.id)) div.classList.add('has-booking');
         if (selectedDates.includes(dStr)) div.classList.add('selected');
@@ -241,6 +280,10 @@
           if (selectedDates.includes(dStr)) selectedDates = selectedDates.filter(x => x !== dStr);
           else selectedDates.push(dStr);
           renderCalendar(); updateDateList(); calculate();
+          
+          // 自動同步切換總覽表日期
+          document.getElementById('matrix-date-picker').value = dStr;
+          renderRoomMatrix();
         };
         grid.appendChild(div);
       }
@@ -263,13 +306,10 @@
       if (dur < 60) { document.getElementById('display-total').innerText = "最少1小時"; return; }
       let total = 0;
       selectedDates.forEach(d => {
-        // 🌟 修正邏輯：而家只有公眾假期先會收 holiday 價錢，星期六日都係收 normal 價錢
         const isPublicHoliday = holidays[d];
         const video = document.getElementById('has-video').checked && currentRoom.id === 'A';
-        
         let rate = isPublicHoliday ? currentRoom.rates.holiday : currentRoom.rates.normal;
         if (video) rate = isPublicHoliday ? currentRoom.vRates.holiday : currentRoom.vRates.normal;
-        
         total += (rate * (dur / 60));
       });
       document.getElementById('display-total').innerText = `$${total.toFixed(1)}`;
@@ -350,9 +390,53 @@
       document.getElementById('year-income').innerText = `$${yTotal.toFixed(1)}`;
     }
 
+    // 🌟 切換管理員頁籤
+    function switchAdminTab(tab) {
+      document.getElementById('tab-btn-list').className = `tab-btn ${tab==='list'?'active':'inactive'}`;
+      document.getElementById('tab-btn-matrix').className = `tab-btn ${tab==='matrix'?'active':'inactive'}`;
+      document.getElementById('admin-tab-list').style.display = tab === 'list' ? 'block' : 'none';
+      document.getElementById('admin-tab-matrix').style.display = tab === 'matrix' ? 'block' : 'none';
+      if (tab === 'matrix') renderRoomMatrix();
+    }
+
+    // 🌟 點擊電話快速過濾
+    window.filterByPhone = (phone) => {
+      switchAdminTab('list');
+      document.getElementById('admin-search').value = phone;
+      renderAdminList();
+    };
+
+    window.clearSearch = () => {
+      document.getElementById('admin-search').value = '';
+      renderAdminList();
+    };
+
+    // 🌟 渲染預約紀錄 (支援 WhatsApp / 姓名過濾)
     function renderAdminList() {
       const container = document.getElementById('booking-list'); container.innerHTML = '';
-      bookings.sort((a,b) => b.start_date.localeCompare(a.start_date)).forEach(b => {
+      const kw = (document.getElementById('admin-search')?.value || '').trim().toLowerCase();
+      const statusBox = document.getElementById('search-status');
+
+      let filtered = bookings.filter(b => {
+        if (!kw) return true;
+        const pMatch = b.phone && b.phone.toLowerCase().includes(kw);
+        const nMatch = b.user_name && b.user_name.toLowerCase().includes(kw);
+        return pMatch || nMatch;
+      });
+
+      if (kw) {
+        statusBox.innerText = `🔍 搜尋 「${kw}」 共找到 ${filtered.length} 筆紀錄`;
+        statusBox.classList.remove('hidden');
+      } else {
+        statusBox.classList.add('hidden');
+      }
+
+      if (filtered.length === 0) {
+        container.innerHTML = `<p class="text-center text-gray-400 py-8 font-bold text-xs">沒有找到符合的預約紀錄</p>`;
+        return;
+      }
+
+      filtered.sort((a,b) => (b.start_date + b.start_time).localeCompare(a.start_date + a.start_time)).forEach(b => {
         const div = document.createElement('div');
         div.className = 'booking-card text-xs space-y-2';
         div.innerHTML = `
@@ -362,17 +446,84 @@
           </div>
           <div class="text-gray-500 font-semibold">
             <p>📅 ${b.start_date} | ⏰ ${b.start_time}-${b.end_time}</p>
-            <p>📱 ${b.phone} | 💰 <span class="text-pink-600 font-black">$${parseFloat(b.total_amount).toFixed(1)}</span></p>
-            ${b.notes ? `<p class="italic text-[10px]">📝 ${b.notes}</p>` : ''}
+            <p>📱 <span onclick="filterByPhone('${b.phone}')" title="點擊搜尋此號碼" class="cursor-pointer text-blue-600 underline hover:text-pink-600 font-bold">${b.phone}</span> | 💰 <span class="text-pink-600 font-black">$${parseFloat(b.total_amount).toFixed(1)}</span></p>
+            ${b.notes ? `<p class="italic text-[10px] text-amber-700">📝 ${b.notes}</p>` : ''}
           </div>
           <div class="flex gap-2 pt-2">
-            ${b.payment_status==='pending'?`<button onclick="confirmPay('${b.id}')" class="bg-green-600 text-white px-3 py-1 rounded-lg flex-1 font-bold">確認收款</button>`:''}
+            ${b.payment_status==='pending'?`<button onclick="confirmPay('${b.id}')" class="bg-green-600 text-white px-3 py-1 rounded-lg flex-1 font-bold shadow hover:bg-green-700">確認收款</button>`:''}
             <button onclick="openEdit('${b.id}')" class="btn-edit flex-1">✏️ 修改</button>
-            <button onclick="delRecord('${b.id}')" class="bg-gray-200 text-gray-500 px-3 py-1 rounded-lg font-bold">刪除</button>
+            <button onclick="delRecord('${b.id}')" class="bg-gray-200 text-gray-500 px-3 py-1 rounded-lg font-bold hover:bg-red-500 hover:text-white">刪除</button>
           </div>
         `;
         container.appendChild(div);
       });
+    }
+
+    // 🌟 渲染每日房間預約總覽表 (Timetable Grid)
+    function renderRoomMatrix() {
+      const container = document.getElementById('room-matrix-container');
+      if (!container) return;
+
+      const dateStr = document.getElementById('matrix-date-picker').value;
+      if (!dateStr) {
+        container.innerHTML = `<p class="p-4 text-center text-xs text-gray-400">請選擇日期</p>`;
+        return;
+      }
+
+      // 產生半小時時間陣列 (08:00 至 21:30)
+      const slots = [];
+      for (let h = 8; h <= 21; h++) {
+        slots.push(`${h.toString().padStart(2, '0')}:00`);
+        slots.push(`${h.toString().padStart(2, '0')}:30`);
+      }
+
+      // 取得當日所有預約
+      const dayBookings = bookings.filter(b => b.start_date === dateStr);
+
+      let html = `<table class="w-full text-[10px] border-collapse text-center">
+        <thead>
+          <tr class="bg-pink-200 text-pink-900 font-bold border-b border-pink-300">
+            <th class="p-1 border-r border-pink-300 min-w-[45px]">時間</th>
+            ${rooms.map(r => `<th class="p-1 border-r border-pink-300 min-w-[50px]">${r.name}</th>`).join('')}
+          </tr>
+        </thead>
+        <tbody>`;
+
+      slots.forEach(slot => {
+        const [sh, sm] = slot.split(':').map(Number);
+        const slotStartMin = sh * 60 + sm;
+        const slotEndMin = slotStartMin + 30;
+
+        html += `<tr class="border-b border-pink-100 hover:bg-pink-50/50">
+          <td class="p-1 bg-pink-50 font-bold text-pink-800 border-r border-pink-200">${slot}</td>`;
+
+        rooms.forEach(room => {
+          // 檢查該房間此時間段是否有被預約
+          const match = dayBookings.find(b => {
+            if (b.room_id !== room.id) return false;
+            const [bSh, bSm] = b.start_time.split(':').map(Number);
+            const [bEh, bEm] = b.end_time.split(':').map(Number);
+            const bStartMin = bSh * 60 + bSm;
+            const bEndMin = bEh * 60 + bEm;
+            return bStartMin < slotEndMin && bEndMin > slotStartMin;
+          });
+
+          if (match) {
+            const isPaid = match.payment_status === 'paid';
+            const bgClass = isPaid ? 'bg-emerald-500 text-white' : 'bg-amber-500 text-white';
+            html += `<td class="p-1 border-r border-pink-100 ${bgClass} font-bold leading-tight" title="${match.user_name} (${match.phone}) ${match.start_time}-${match.end_time}">
+              ${match.user_name}
+            </td>`;
+          } else {
+            html += `<td class="p-1 border-r border-pink-100 text-gray-300">-</td>`;
+          }
+        });
+
+        html += `</tr>`;
+      });
+
+      html += `</tbody></table>`;
+      container.innerHTML = html;
     }
 
     window.openEdit = (id) => {
