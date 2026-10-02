@@ -34,6 +34,7 @@
     .tab-btn { padding: 6px 12px; border-radius: 8px; font-weight: bold; font-size: 12px; cursor: pointer; transition: all 0.2s; }
     .tab-btn.active { background: #EC4899; color: white; }
     .tab-btn.inactive { background: #FCE7F3; color: #BE185D; }
+    .weekday-checkbox input:checked + span { background-color: #EC4899; color: white; border-color: #BE185D; }
   </style>
 </head>
 <body class="h-full bg-pink-50">
@@ -91,20 +92,59 @@
     <main class="flex-1 flex overflow-hidden">
       <!-- 左側預約流程區塊 -->
       <section class="flex-1 overflow-y-auto p-6 space-y-6 bg-white shadow-inner">
+        
+        <!-- 1. 選擇房間 -->
         <div class="border-2 border-pink-100 p-6 rounded-2xl">
           <h3 class="font-bold text-pink-900 mb-4 flex items-center gap-2">🎹 1. 選擇房間</h3>
           <div class="flex flex-wrap gap-3" id="room-grid"></div>
           <div id="room-info-display" class="mt-4 p-4 bg-pink-50 rounded-xl border border-pink-200 hidden text-xs font-bold text-pink-800"></div>
         </div>
 
+        <!-- 2. 選擇日期 -->
         <div class="border-2 border-pink-100 p-6 rounded-2xl">
           <div class="flex justify-between items-center mb-4">
             <h3 class="font-bold text-pink-900">📅 2. 選擇日期</h3>
             <div class="flex gap-2">
-              <button onclick="changeMonth(-1)" class="text-pink-600 font-bold border border-pink-300 px-3 py-1 rounded-lg">上月</button>
-              <button onclick="changeMonth(1)" class="text-pink-600 font-bold border border-pink-300 px-3 py-1 rounded-lg">下月</button>
+              <button onclick="changeMonth(-1)" class="text-pink-600 font-bold border border-pink-300 px-3 py-1 rounded-lg text-xs">上月</button>
+              <button onclick="changeMonth(1)" class="text-pink-600 font-bold border border-pink-300 px-3 py-1 rounded-lg text-xs">下月</button>
             </div>
           </div>
+
+          <!-- 🌟 週期連續租用設定面板 -->
+          <div class="mb-5 p-4 bg-pink-100/60 rounded-xl border-2 border-pink-200 space-y-3">
+            <div class="flex items-center justify-between">
+              <span class="font-black text-xs text-pink-900 flex items-center gap-1">🔄 週期/連續租用 (例如：逢星期三)</span>
+              <button onclick="clearSelectedDates()" class="text-[10px] text-pink-700 underline font-bold">清除已選日期</button>
+            </div>
+            
+            <div class="grid grid-cols-2 gap-2">
+              <div>
+                <label class="text-[10px] font-bold text-pink-800 block">開始日期</label>
+                <input type="date" id="recurring-start" class="input-pink py-1 text-xs">
+              </div>
+              <div>
+                <label class="text-[10px] font-bold text-pink-800 block">結束日期</label>
+                <input type="date" id="recurring-end" class="input-pink py-1 text-xs">
+              </div>
+            </div>
+
+            <div>
+              <label class="text-[10px] font-bold text-pink-800 block mb-1">重複星期 (可多選)：</label>
+              <div class="flex justify-between gap-1">
+                <label class="weekday-checkbox cursor-pointer flex-1 text-center"><input type="checkbox" value="0" class="recurring-day-cb hidden"><span class="block py-1 rounded border border-pink-300 bg-white text-xs font-bold">日</span></label>
+                <label class="weekday-checkbox cursor-pointer flex-1 text-center"><input type="checkbox" value="1" class="recurring-day-cb hidden"><span class="block py-1 rounded border border-pink-300 bg-white text-xs font-bold">一</span></label>
+                <label class="weekday-checkbox cursor-pointer flex-1 text-center"><input type="checkbox" value="2" class="recurring-day-cb hidden"><span class="block py-1 rounded border border-pink-300 bg-white text-xs font-bold">二</span></label>
+                <label class="weekday-checkbox cursor-pointer flex-1 text-center"><input type="checkbox" value="3" class="recurring-day-cb hidden"><span class="block py-1 rounded border border-pink-300 bg-white text-xs font-bold">三</span></label>
+                <label class="weekday-checkbox cursor-pointer flex-1 text-center"><input type="checkbox" value="4" class="recurring-day-cb hidden"><span class="block py-1 rounded border border-pink-300 bg-white text-xs font-bold">四</span></label>
+                <label class="weekday-checkbox cursor-pointer flex-1 text-center"><input type="checkbox" value="5" class="recurring-day-cb hidden"><span class="block py-1 rounded border border-pink-300 bg-white text-xs font-bold">五</span></label>
+                <label class="weekday-checkbox cursor-pointer flex-1 text-center"><input type="checkbox" value="6" class="recurring-day-cb hidden"><span class="block py-1 rounded border border-pink-300 bg-white text-xs font-bold">六</span></label>
+              </div>
+            </div>
+
+            <button onclick="generateRecurringDates()" class="w-full bg-pink-600 hover:bg-pink-700 text-white font-bold py-2 rounded-lg text-xs shadow">⚡ 產生連續租用日期</button>
+          </div>
+
+          <!-- 日曆視圖 -->
           <div id="calendar-month-title" class="text-center font-black text-pink-800 mb-4"></div>
           <div class="grid grid-cols-7 gap-1 text-center text-[11px] font-bold mb-2 text-gray-400">
             <div>日</div><div>一</div><div>二</div><div>三</div><div>四</div><div>五</div><div>六</div>
@@ -113,6 +153,7 @@
           <div id="selected-dates-list" class="mt-4 flex flex-wrap gap-2"></div>
         </div>
 
+        <!-- 3. 預約詳情 -->
         <div class="border-2 border-pink-100 p-6 rounded-2xl space-y-5">
           <h3 class="font-bold text-pink-900">⏰ 3. 預約詳情</h3>
           <div class="rule-alert">📢 網上預約不接受少於 24 小時的預約</div>
@@ -129,10 +170,21 @@
               <input type="checkbox" id="has-video" class="w-5 h-5" onchange="calculate()"> 📹 加購錄影服務
             </label>
           </div>
-          <div class="bg-gradient-to-br from-yellow-50 to-orange-50 p-5 rounded-2xl text-center border-2 border-orange-200">
-            <p class="text-xs font-bold text-orange-800 tracking-widest uppercase">預計總費用</p>
-            <p id="display-total" class="text-4xl font-black text-pink-600 mt-1">$0.0</p>
+
+          <!-- 🌟 實收金額 (支援直接編輯/修改) -->
+          <div class="bg-gradient-to-br from-yellow-50 to-orange-50 p-5 rounded-2xl text-center border-2 border-orange-200 space-y-2">
+            <div class="flex justify-between items-center px-2">
+              <p class="text-xs font-bold text-orange-800 tracking-widest uppercase">總費用 / 實收金額 ($)</p>
+              <button onclick="resetToAutoCalculatedPrice()" class="text-[10px] text-pink-600 font-bold underline">🔄 恢復原價</button>
+            </div>
+            
+            <div class="relative max-w-[240px] mx-auto">
+              <span class="absolute left-3 top-2 text-2xl font-black text-pink-600">$</span>
+              <input type="number" id="custom-price" step="0.1" class="w-full text-center text-3xl font-black text-pink-600 bg-white border-2 border-pink-300 rounded-xl py-1 pl-6 pr-2 focus:outline-none focus:border-pink-500 shadow-inner" placeholder="0.0">
+            </div>
+            <p id="price-hint" class="text-[10px] text-gray-500 font-bold"></p>
           </div>
+
           <button id="submit-btn" onclick="handleBooking()" class="btn-primary w-full py-5 text-xl shadow-xl transition active:scale-95">確認並提交預約</button>
         </div>
       </section>
@@ -164,7 +216,7 @@
             <input type="date" id="matrix-date-picker" onchange="renderRoomMatrix()" class="input-pink py-1 text-xs">
           </div>
           <div class="text-[11px] font-bold text-gray-500 text-center flex justify-center gap-4">
-            <span class="flex items-center gap-1"><span class="w-3 h-3 bg-green-500 rounded-sm inline-block"></span> 已付款</span>
+            <span class="flex items-center gap-1"><span class="w-3 h-3 bg-emerald-500 rounded-sm inline-block"></span> 已付款</span>
             <span class="flex items-center gap-1"><span class="w-3 h-3 bg-amber-500 rounded-sm inline-block"></span> 待付款</span>
             <span class="flex items-center gap-1"><span class="w-3 h-3 bg-gray-100 border rounded-sm inline-block"></span> 空置</span>
           </div>
@@ -201,6 +253,7 @@
 
     const holidays = { '2026-05-01': '勞動節', '2026-05-25': '佛誕', '2026-06-19': '端午節', '2026-07-01': '特區成立', '2026-10-01': '國慶', '2026-12-25': '聖誕' };
     let bookings = [], selectedDates = [], currentRoom = null, viewDate = new Date(), isStaff = false;
+    let isPriceManuallyEdited = false;
 
     function enterMode(mode) {
       if (mode === 'staff') {
@@ -213,7 +266,6 @@
       document.getElementById('login-overlay').style.display = 'none';
       document.getElementById('app-content').style.display = 'flex';
       
-      // 初始化矩陣視圖的日期為今日
       const todayStr = new Date().toISOString().split('T')[0];
       document.getElementById('matrix-date-picker').value = todayStr;
       
@@ -249,6 +301,12 @@
       const last = `<option value="22:00">22:00</option>`;
       et.innerHTML += last; ee.innerHTML += last;
 
+      // 追蹤用戶手動修改金額
+      document.getElementById('custom-price').addEventListener('input', () => {
+        isPriceManuallyEdited = true;
+        document.getElementById('price-hint').innerText = "✏️ 已設定為自訂金額";
+      });
+
       bookingsRef.on('value', snap => {
         const data = snap.val();
         bookings = data ? Object.keys(data).map(k => ({ id: k, ...data[k] })) : [];
@@ -281,7 +339,6 @@
           else selectedDates.push(dStr);
           renderCalendar(); updateDateList(); calculate();
           
-          // 自動同步切換總覽表日期
           document.getElementById('matrix-date-picker').value = dStr;
           renderRoomMatrix();
         };
@@ -293,17 +350,82 @@
       document.getElementById('selected-dates-list').innerHTML = selectedDates.map(d => `<span class="bg-pink-600 text-white text-[10px] px-3 py-1 rounded-full font-bold shadow-sm">${d}</span>`).join('');
     }
 
+    function clearSelectedDates() {
+      selectedDates = [];
+      renderCalendar();
+      updateDateList();
+      calculate();
+    }
+
+    // 🌟 產生週期/重複預約日期 (例如: 9月1日 至 12月31日 逢星期三)
+    function generateRecurringDates() {
+      const startStr = document.getElementById('recurring-start').value;
+      const endStr = document.getElementById('recurring-end').value;
+      
+      if (!startStr || !endStr) {
+        return alert('⚠️ 請選擇週期開始及結束日期');
+      }
+
+      const start = new Date(startStr);
+      const end = new Date(endStr);
+
+      if (start > end) {
+        return alert('⚠️ 結束日期不能早於開始日期');
+      }
+
+      const checkedDays = Array.from(document.querySelectorAll('.recurring-day-cb:checked')).map(cb => parseInt(cb.value));
+      if (checkedDays.length === 0) {
+        return alert('⚠️ 請最少勾選一個星期幾（例如：星期三）');
+      }
+
+      const newDates = [];
+      let curr = new Date(start);
+
+      while (curr <= end) {
+        const dayOfWeek = curr.getDay();
+        if (checkedDays.includes(dayOfWeek)) {
+          const y = curr.getFullYear();
+          const m = (curr.getMonth() + 1).toString().padStart(2, '0');
+          const d = curr.getDate().toString().padStart(2, '0');
+          newDates.push(`${y}-${m}-${d}`);
+        }
+        curr.setDate(curr.getDate() + 1);
+      }
+
+      if (newDates.length === 0) {
+        return alert('⚠️ 所選範圍內沒有符合的星期數');
+      }
+
+      selectedDates = newDates;
+      renderCalendar();
+      updateDateList();
+      calculate();
+      alert(`✅ 已成功選取 ${selectedDates.length} 個週期預約日期！`);
+    }
+
     function changeMonth(s) { viewDate.setMonth(viewDate.getMonth() + s); renderCalendar(); }
+
+    function resetToAutoCalculatedPrice() {
+      isPriceManuallyEdited = false;
+      document.getElementById('price-hint').innerText = "🤖 系統自動計算原價";
+      calculate();
+    }
 
     function calculate() {
       if (!currentRoom || selectedDates.length === 0) {
-          document.getElementById('display-total').innerText = "$0.0";
-          return;
+        if (!isPriceManuallyEdited) document.getElementById('custom-price').value = "0.0";
+        document.getElementById('price-hint').innerText = "請選擇房間及日期";
+        return;
       }
       const [sh, sm] = document.getElementById('start-time').value.split(':').map(Number);
       const [eh, em] = document.getElementById('end-time').value.split(':').map(Number);
       const dur = (eh * 60 + em) - (sh * 60 + sm);
-      if (dur < 60) { document.getElementById('display-total').innerText = "最少1小時"; return; }
+      if (dur < 60) {
+        document.getElementById('price-hint').innerText = "⚠️ 最少預約 1 小時";
+        if (!isPriceManuallyEdited) document.getElementById('custom-price').value = "0.0";
+        return;
+      }
+
       let total = 0;
       selectedDates.forEach(d => {
         const isPublicHoliday = holidays[d];
@@ -312,7 +434,11 @@
         if (video) rate = isPublicHoliday ? currentRoom.vRates.holiday : currentRoom.vRates.normal;
         total += (rate * (dur / 60));
       });
-      document.getElementById('display-total').innerText = `$${total.toFixed(1)}`;
+
+      if (!isPriceManuallyEdited) {
+        document.getElementById('custom-price').value = total.toFixed(1);
+        document.getElementById('price-hint').innerText = `🤖 共 ${selectedDates.length} 日 (${dur/60}小時/日) 自動計算原價`;
+      }
     }
 
     async function handleBooking() {
@@ -321,6 +447,7 @@
         const phone = document.getElementById('user-phone').value;
         const start = document.getElementById('start-time').value;
         const end = document.getElementById('end-time').value;
+        const priceVal = document.getElementById('custom-price').value;
         
         if (!currentRoom || selectedDates.length === 0 || !name || !phone) {
           return alert('⚠️ 資料未填寫完整');
@@ -333,10 +460,14 @@
             if (checkDate < limit) return alert('❌ 網上不接受少於 24 小時預約'); 
           }
         }
-        
-        const totalText = document.getElementById('display-total').innerText;
-        if (totalText.includes('小時')) return alert('⚠️ 時間長度錯誤');
-        const totalNum = parseFloat(totalText.replace('$',''));
+
+        const totalNum = parseFloat(priceVal);
+        if (isNaN(totalNum) || totalNum < 0) {
+          return alert('⚠️ 請輸入有效的實收金額');
+        }
+
+        // 平均分攤金額到每一個預約日
+        const perBookingAmount = parseFloat((totalNum / selectedDates.length).toFixed(1));
 
         for (let d of selectedDates) {
           await bookingsRef.push({
@@ -346,10 +477,10 @@
             end_time: end,
             user_name: name, 
             phone: phone, 
-            total_amount: parseFloat((totalNum/selectedDates.length).toFixed(1)),
+            total_amount: perBookingAmount,
             payment_status: isStaff ? 'paid' : 'pending', 
             created_at: new Date().toISOString(), 
-            notes: isStaff ? "管理員直接登記" : "網上預約"
+            notes: isStaff ? (isPriceManuallyEdited ? "管理員直接登記(自訂金額)" : "管理員直接登記") : "網上預約"
           });
         }
 
@@ -357,16 +488,17 @@
           fetch(EMAIL_API, { 
             method: 'POST', 
             mode: 'no-cors', 
-            body: JSON.stringify({ user_name: name, phone: phone, room: currentRoom.name, dates: selectedDates.join(','), time: `${start}-${end}`, price: totalText }) 
+            body: JSON.stringify({ user_name: name, phone: phone, room: currentRoom.name, dates: selectedDates.join(','), time: `${start}-${end}`, price: `$${totalNum.toFixed(1)}` }) 
           }); 
         } catch(e) { console.log(e); }
         
-        alert('✅ 預約提交成功！');
+        alert(`✅ 已成功提交 ${selectedDates.length} 筆預約！`);
 
         selectedDates = [];
         document.getElementById('user-name').value = '';
         document.getElementById('user-phone').value = '';
         document.getElementById('has-video').checked = false;
+        isPriceManuallyEdited = false;
         updateDateList();
         renderCalendar();
         calculate();
@@ -390,7 +522,6 @@
       document.getElementById('year-income').innerText = `$${yTotal.toFixed(1)}`;
     }
 
-    // 🌟 切換管理員頁籤
     function switchAdminTab(tab) {
       document.getElementById('tab-btn-list').className = `tab-btn ${tab==='list'?'active':'inactive'}`;
       document.getElementById('tab-btn-matrix').className = `tab-btn ${tab==='matrix'?'active':'inactive'}`;
@@ -399,7 +530,6 @@
       if (tab === 'matrix') renderRoomMatrix();
     }
 
-    // 🌟 點擊電話快速過濾
     window.filterByPhone = (phone) => {
       switchAdminTab('list');
       document.getElementById('admin-search').value = phone;
@@ -411,7 +541,6 @@
       renderAdminList();
     };
 
-    // 🌟 渲染預約紀錄 (支援 WhatsApp / 姓名過濾)
     function renderAdminList() {
       const container = document.getElementById('booking-list'); container.innerHTML = '';
       const kw = (document.getElementById('admin-search')?.value || '').trim().toLowerCase();
@@ -459,7 +588,6 @@
       });
     }
 
-    // 🌟 渲染每日房間預約總覽表 (Timetable Grid)
     function renderRoomMatrix() {
       const container = document.getElementById('room-matrix-container');
       if (!container) return;
@@ -470,14 +598,12 @@
         return;
       }
 
-      // 產生半小時時間陣列 (08:00 至 21:30)
       const slots = [];
       for (let h = 8; h <= 21; h++) {
         slots.push(`${h.toString().padStart(2, '0')}:00`);
         slots.push(`${h.toString().padStart(2, '0')}:30`);
       }
 
-      // 取得當日所有預約
       const dayBookings = bookings.filter(b => b.start_date === dateStr);
 
       let html = `<table class="w-full text-[10px] border-collapse text-center">
@@ -498,7 +624,6 @@
           <td class="p-1 bg-pink-50 font-bold text-pink-800 border-r border-pink-200">${slot}</td>`;
 
         rooms.forEach(room => {
-          // 檢查該房間此時間段是否有被預約
           const match = dayBookings.find(b => {
             if (b.room_id !== room.id) return false;
             const [bSh, bSm] = b.start_time.split(':').map(Number);
