@@ -290,15 +290,18 @@
         grid.appendChild(div);
       });
 
+      // 🌟 產生 09:00 至 21:00，每 15 分鐘為一個時段的選項
       const st = document.getElementById('start-time'), et = document.getElementById('end-time'), es = document.getElementById('edit-start'), ee = document.getElementById('edit-end');
-      for (let h = 8; h <= 21; h++) {
-        [0, 30].forEach(m => {
+      st.innerHTML = ''; et.innerHTML = ''; es.innerHTML = ''; ee.innerHTML = '';
+      
+      for (let h = 9; h <= 20; h++) {
+        [0, 15, 30, 45].forEach(m => {
           const t = `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}`;
           const o = `<option value="${t}">${t}</option>`;
           st.innerHTML += o; et.innerHTML += o; es.innerHTML += o; ee.innerHTML += o;
         });
       }
-      const last = `<option value="22:00">22:00</option>`;
+      const last = `<option value="21:00">21:00</option>`;
       et.innerHTML += last; ee.innerHTML += last;
 
       // 追蹤用戶手動修改金額
@@ -357,7 +360,6 @@
       calculate();
     }
 
-    // 🌟 產生週期/重複預約日期 (例如: 9月1日 至 12月31日 逢星期三)
     function generateRecurringDates() {
       const startStr = document.getElementById('recurring-start').value;
       const endStr = document.getElementById('recurring-end').value;
@@ -437,7 +439,7 @@
 
       if (!isPriceManuallyEdited) {
         document.getElementById('custom-price').value = total.toFixed(1);
-        document.getElementById('price-hint').innerText = `🤖 共 ${selectedDates.length} 日 (${dur/60}小時/日) 自動計算原價`;
+        document.getElementById('price-hint').innerText = `🤖 共 ${selectedDates.length} 日 (${(dur/60).toFixed(2)}小時/日) 自動計算原價`;
       }
     }
 
@@ -466,7 +468,6 @@
           return alert('⚠️ 請輸入有效的實收金額');
         }
 
-        // 平均分攤金額到每一個預約日
         const perBookingAmount = parseFloat((totalNum / selectedDates.length).toFixed(1));
 
         for (let d of selectedDates) {
@@ -588,6 +589,7 @@
       });
     }
 
+    // 🌟 渲染每日房間預約總覽表 (15 分鐘為單位)
     function renderRoomMatrix() {
       const container = document.getElementById('room-matrix-container');
       if (!container) return;
@@ -598,10 +600,12 @@
         return;
       }
 
+      // 產生 09:00 至 20:45 的 15 分鐘區間陣列
       const slots = [];
-      for (let h = 8; h <= 21; h++) {
-        slots.push(`${h.toString().padStart(2, '0')}:00`);
-        slots.push(`${h.toString().padStart(2, '0')}:30`);
+      for (let h = 9; h <= 20; h++) {
+        [0, 15, 30, 45].forEach(m => {
+          slots.push(`${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}`);
+        });
       }
 
       const dayBookings = bookings.filter(b => b.start_date === dateStr);
@@ -618,7 +622,7 @@
       slots.forEach(slot => {
         const [sh, sm] = slot.split(':').map(Number);
         const slotStartMin = sh * 60 + sm;
-        const slotEndMin = slotStartMin + 30;
+        const slotEndMin = slotStartMin + 15; // 🌟 15分鐘為一個區間
 
         html += `<tr class="border-b border-pink-100 hover:bg-pink-50/50">
           <td class="p-1 bg-pink-50 font-bold text-pink-800 border-r border-pink-200">${slot}</td>`;
